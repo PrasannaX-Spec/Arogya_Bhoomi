@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}What-If Recovery Simulator{% endblock %}
+{% block page_title %}What-If Soil Recovery Simulator{% endblock %}
+
+{% block header_actions %}
+<a href="/impact" class="btn btn-secondary btn-sm">View Environmental Impact</a>
+{% endblock %}
+
+{% block content %}
+<div class="command-header" style="background: linear-gradient(135deg, #2b5439 0%, #1e3a29 100%);">
+    <h2 style="color: #ffffff !important;">What-If Agricultural Recovery Simulator</h2>
+    <p>Simulate how custom quantities of recovered pharmaceutical mineral compounds translate into elemental nutrient yield and addressable agricultural farmland coverage.</p>
+</div>
+
+<div class="simulator-wizard">
+    <!-- Input Form Card -->
+    <div class="simulator-card">
+        <h3 class="card-title" style="margin-bottom: 1.25rem;">Simulation Parameters</h3>
+
+        <form id="simForm">
+            <!-- Step 1: Select Compound -->
+            <div class="form-group">
+                <label class="form-label" for="simCompound">Step 1: Select Recovered Mineral Compound</label>
+                <select id="simCompound" class="form-control" required>
+                    <option value="Zinc Sulphate">Zinc Sulphate (ZnSO₄) — 21% Zn</option>
+                    <option value="Ferrous Sulphate">Ferrous Sulphate (FeSO₄) — 20.1% Fe (Foliar Spray)</option>
+                    <option value="Potassium Chloride">Potassium Chloride (KCl) — 52.4% K</option>
+                </select>
+            </div>
+
+            <!-- Step 2: Enter Quantity -->
+            <div class="form-group">
+                <label class="form-label" for="simQty">Step 2: Enter Recovered Quantity (kg)</label>
+                <input type="number" id="simQty" class="form-control" value="500" min="1" step="0.1" required />
+            </div>
+
+            <!-- Step 3: Select Severity Tier -->
+            <div class="form-group">
+                <label class="form-label" for="simSeverity">Step 3: Select Target Soil Deficiency Severity</label>
+                <select id="simSeverity" class="form-control" required>
+                    <option value="Low">Low Deficiency Severity (-25% rate)</option>
+                    <option value="Medium" selected>Medium Deficiency Severity (Standard GRD rate)</option>
+                    <option value="High">High Deficiency Severity (+25% rate)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Run Recovery Simulation
+            </button>
+        </form>
+    </div>
+
+    <!-- Output Result Card -->
+    <div class="simulator-card" id="resultCard" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h3 class="card-title">Simulation Results</h3>
+                <span class="status-chip status-chip-accepted" id="simResultType">Soil Application</span>
+            </div>
+
+            <div class="result-metric-box">
+                <div class="result-metric-val" id="resAddressableHa">0 ha</div>
+                <div class="result-metric-lbl">Potential Addressable Farmland</div>
+            </div>
+
+            <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1rem; font-size: 0.85rem;">
+                <div style="margin-bottom: 0.5rem;">
+                    <strong>Elemental Nutrient Content:</strong>
+                    <span id="resElementalStr" style="color: var(--primary-color); font-weight: 700;">--</span>
+                </div>
+
+                <div style="margin-bottom: 0.5rem;" id="resDosageRow">
+                    <strong>Dosage Application Rate:</strong>
+                    <span id="resDosageRate">--</span>
+                </div>
+
+                <div id="resFoliarRow" style="display: none; background: #fff8e6; border: 1px solid #f8dfa4; padding: 0.65rem; border-radius: var(--radius-sm); color: #8a5d00;">
+                    <strong>Foliar Spray Specification:</strong>
+                    <p id="resFoliarSpec" style="margin-top: 0.2rem; font-size: 0.8rem;"></p>
+                </div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 1rem; font-size: 0.78rem; color: var(--text-muted);">
+                <strong style="color: var(--text-main);">Transparent Calculation Breakdown:</strong>
+                <ul style="margin-top: 0.4rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem;">
+                    <li id="calcFormula">--</li>
+                    <li id="calcReference">--</li>
+                    <li id="calcArea">--</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="disclaimer-banner" style="margin-top: 1.25rem; margin-bottom: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>
+                <strong>Simulation Disclaimer:</strong> Simulation estimates potential addressable area using the platform's ICAR GRD reference dosage rules. It is not a crop-specific agronomic prescription.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    runSimulation();
+    document.getElementById('simForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        runSimulation();
+    });
+});
+
+async function runSimulation() {
+    const compound_name = document.getElementById('simCompound').value;
+    const quantity_kg = parseFloat(document.getElementById('simQty').value);
+    const severity = document.getElementById('simSeverity').value;
+
+    try {
+        const res = await fetch('/api/simulate_recovery', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ compound_name, quantity_kg, severity })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || 'Simulation failed.');
+            return;
+        }
+
+        renderResults(data);
+    } catch (e) {
+        console.error('Simulation request error:', e);
+    }
+}
+
+function renderResults(data) {
+    document.getElementById('resAddressableHa').textContent = data.potential_addressable_ha.toLocaleString() + ' hectares';
+    document.getElementById('resElementalStr').textContent = `${data.elemental_nutrient.elemental_kg} kg ${data.elemental_nutrient.name} (${data.elemental_nutrient.symbol})`;
+
+    document.getElementById('calcFormula').textContent = data.calculation_breakdown.formula;
+    document.getElementById('calcReference').textContent = data.calculation_breakdown.dosage_reference;
+    document.getElementById('calcArea').textContent = data.calculation_breakdown.area_formula;
+
+    const resDosageRow = document.getElementById('resDosageRow');
+    const resFoliarRow = document.getElementById('resFoliarRow');
+    const typeChip = document.getElementById('simResultType');
+
+    if (data.type === 'foliar_spray') {
+        typeChip.textContent = 'Foliar Spray Branch';
+        typeChip.className = 'status-chip status-chip-docs';
+        resDosageRow.style.display = 'none';
+        resFoliarRow.style.display = 'block';
+        document.getElementById('resFoliarSpec').textContent = data.foliar_spec;
+    } else {
+        typeChip.textContent = 'Soil Application';
+        typeChip.className = 'status-chip status-chip-accepted';
+        resDosageRow.style.display = 'block';
+        resFoliarRow.style.display = 'none';
+        document.getElementById('resDosageRate').textContent = `${data.base_rate_kg_ha} kg ${data.compound_name}/ha (${data.severity} severity)`;
+    }
+}
+</script>
+{% endblock %}

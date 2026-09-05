@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <div class="page-header">
+        <h1>About This Platform</h1>
+        <p>Understanding the concept, methodology, and scope of the Traceable Recovery & Deployment Platform</p>
+    </div>
+
+    <!-- Problem -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2 style="margin-bottom: 0.75rem;">The Problem</h2>
+        <p>
+            India generates massive quantities of expired pharmaceutical stock every year.
+            In 2016 alone, the FDC ban led to over &#8377;400 crore worth of medicines being destroyed.
+            Currently, this stock is incinerated or landfilled &mdash; there is no recovery pathway.
+        </p>
+        <p>
+            Meanwhile, Indian soils have severe micronutrient deficiencies:
+            <strong>49% are Zinc-deficient</strong> and <strong>over 33% are Iron-deficient</strong>
+            (Naik et al., 2024). These are the same minerals present in common pharmaceutical products.
+        </p>
+        <p style="margin-bottom: 0;">
+            There is currently <strong>no system</strong> that connects these two sides &mdash;
+            expired pharmaceutical stock and deficient agricultural regions &mdash; to enable
+            safe, dosage-controlled reuse.
+        </p>
+    </div>
+
+    <!-- Solution -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2 style="margin-bottom: 0.75rem;">The Solution</h2>
+        <p>
+            This platform provides a <strong>4-module pipeline</strong> that processes expired
+            pharmaceutical batches from intake to deployment recommendation:
+        </p>
+        <ol style="padding-left: 1.25rem; line-height: 2;">
+            <li><strong>Intake & Compliance</strong> &mdash; Verify the batch contains an approved single-compound medicine</li>
+            <li><strong>Geolocation</strong> &mdash; Resolve the batch's source location to geographic coordinates</li>
+            <li><strong>Soil-Deficiency Matching</strong> &mdash; Find the nearest region with documented deficiency in that compound's mineral</li>
+            <li><strong>Dosage Recommendation</strong> &mdash; Generate an ICAR-based application rate for the matched region</li>
+        </ol>
+    </div>
+
+    <!-- Approved Compounds -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2 style="margin-bottom: 0.75rem;">Approved Compounds</h2>
+        <p class="text-secondary">Only these 3 single-compound medicines are currently approved for recovery:</p>
+
+        <div class="table-wrapper" style="margin-top: 1rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Compound</th>
+                        <th>Nutrient</th>
+                        <th>Pharmaceutical Reference</th>
+                        <th>Agricultural Equivalent</th>
+                    </tr>
+                </thead>
+                <tbody id="compoundsBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box warning" style="margin-top: 1rem;">
+            <strong>Important:</strong> Combination products (e.g., Zincovit, Fefol, Shelcal) are
+            explicitly excluded. Only exact-match single-compound medicines are accepted. This is
+            a safety and verification requirement.
+        </div>
+    </div>
+
+    <!-- Dosage -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2 style="margin-bottom: 0.75rem;">Dosage Methodology</h2>
+        <p>
+            Dosage recommendations use the <strong>ICAR General Recommended Dose (GRD) &plusmn;25%</strong>
+            framework, a simplified version of the full STCR target-yield equations suitable for
+            this prototype:
+        </p>
+        <div class="table-wrapper" style="margin-top: 1rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity Tier</th>
+                        <th>Adjustment</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-rejected">Low</span></td>
+                        <td>GRD + 25%</td>
+                        <td>Severely deficient soils need higher application</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-pending">Medium</span></td>
+                        <td>GRD as-is</td>
+                        <td>Standard recommendation for moderately deficient soils</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-accepted">High</span></td>
+                        <td>GRD - 25%</td>
+                        <td>Less deficient soils need lower application</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box" style="margin-top: 1rem;">
+            <strong>Ferrous Sulphate Exception:</strong> ICAR recommends a <strong>foliar spray</strong>
+            route for iron correction (3-4 sprays of 1.0% FeSO&#8324; at weekly intervals), not soil
+            application. This is handled as a dedicated branch in the dosage module.
+        </div>
+    </div>
+
+    <!-- Limitations -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2 style="margin-bottom: 0.75rem;">Known Limitations</h2>
+        <p class="text-secondary">This is a hackathon prototype. The following limitations should be noted:</p>
+        <ul style="padding-left: 1.25rem; line-height: 2;">
+            <li>Soil deficiency data is static (ICAR 2012-2018), not a live government feed</li>
+            <li>Dosage uses simplified GRD &plusmn;25% rule, not full STCR equations</li>
+            <li>No real distributor/pharmacy has been onboarded &mdash; intake data is synthetic</li>
+            <li>Actual chemical extraction and logistics are out of scope</li>
+            <li>Only 3 compounds are currently supported</li>
+        </ul>
+    </div>
+
+    <!-- Data Sources -->
+    <div class="card">
+        <h2 style="margin-bottom: 0.75rem;">Data Sources</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Source</th><th>Type</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Soil deficiency (state-level)</td>
+                        <td>ICAR National Soil Survey 2012-2018, Naik et al. 2024</td>
+                        <td>Real, static</td>
+                    </tr>
+                    <tr>
+                        <td>Agronomic dosage rates</td>
+                        <td>ICAR Indian Farming 75(06), June 2025</td>
+                        <td>Real, static</td>
+                    </tr>
+                    <tr>
+                        <td>Expired stock intake data</td>
+                        <td>Synthetic demo data (45 batches)</td>
+                        <td>Synthetic</td>
+                    </tr>
+                    <tr>
+                        <td>Approved compound list</td>
+                        <td>Project research (verified pharmaceutical + agricultural equivalence)</td>
+                        <td>Real, static</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', loadCompounds);
+
+async function loadCompounds() {
+    try {
+        const res = await fetch('/api/compounds');
+        const compounds = await res.json();
+        const body = document.getElementById('compoundsBody');
+
+        for (const c of compounds) {
+            body.innerHTML += `
+                <tr>
+                    <td style="font-weight:600;">${c.compound_name}</td>
+                    <td>${c.nutrient}</td>
+                    <td>${c.product_reference}</td>
+                    <td>${c.agri_precedent}</td>
+                </tr>
+            `;
+        }
+    } catch (e) {
+        console.error('Failed to load compounds:', e);
+    }
+}
+</script>
+{% endblock %}

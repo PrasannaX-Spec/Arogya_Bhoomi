@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% block title %}Process Batch {{ batch_doc_id }}{% endblock %}
+{% block page_title %}Pipeline Execution: {{ batch_doc_id }}{% endblock %}
+
+{% block header_actions %}
+<a href="/batches" class="btn btn-secondary btn-sm">Return to Stock Ledger</a>
+{% endblock %}
+
+{% block content %}
+<!-- Idempotent Banner (Shown if already completed) -->
+<div id="alreadyProcessedBanner" class="disclaimer-banner" style="display:none; background-color: #eaf4eb; border-color: #b8e0bc; border-left-color: #1d6027; color: #164e20;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <div>
+        <strong>Pipeline already completed for this batch.</strong>
+        <span style="font-size: 0.82rem; color: #225c2f; display: block; margin-top: 0.2rem;">
+            This batch has already been processed through compliance, geolocation, matching, and dosage recommendations. Existing records are preserved (Idempotent processing).
+        </span>
+    </div>
+</div>
+
+<!-- Batch Info Card -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Batch Specification &amp; Current Metadata</h3>
+        <code class="font-mono">{{ batch_doc_id }}</code>
+    </div>
+    <div id="batchInfoLoading" style="padding: 1rem; text-align: center; color: var(--text-muted);">
+        Loading batch details...
+    </div>
+    <div id="batchInfoContent" style="display:none;"></div>
+</div>
+
+<!-- Process Control Box -->
+<div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+    <button class="btn btn-primary" id="btnProcess" onclick="processBatch()">
+        Run Full Pipeline
+    </button>
+    <span id="processStatusText" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+</div>
+
+<!-- Pipeline Step Results -->
+<div id="pipelineResults" style="display:none;">
+    <!-- Step 1: Compliance Check -->
+    <div class="card" id="step1Card" style="border-left: 4px solid var(--border-color);">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div>
+                <h4 style="font-size: 0.95rem;">Module 1: Intake &amp; Whitelist Compliance</h4>
+            </div>
+            <span class="status-chip" id="step1Badge">--</span>
+        </div>
+        <div id="step1Body" style="font-size: 0.875rem;"></div>
+    </div>
+
+    <!-- Step 2: Geolocation Resolution -->
+    <div class="card" id="step2Card" style="display:none; border-left: 4px solid var(--border-color);">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+                <h4 style="font-size: 0.95rem;">Module 4: Geolocation Resolution</h4>
+            </div>
+            <span class="status-chip" id="step2Badge">--</span>
+        </div>
+        <div id="step2Body" style="font-size: 0.875rem;"></div>
+    </div>
+
+    <!-- Step 3: Soil-Deficiency Matching -->
+    <div class="card" id="step3Card" style="display:none; border-left: 4px solid var(--border-color);">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div>
+                <h4 style="font-size: 0.95rem;">Module 2: Soil-Deficiency Regional Matching</h4>
+            </div>
+            <span class="status-chip" id="step3Badge">--</span>
+        </div>
+        <div id="step3Body" style="font-size: 0.875rem;"></div>
+    </div>
+
+    <!-- Step 4: Dosage Recommendation -->
+    <div class="card" id="step4Card" style="display:none; border-left: 4px solid var(--border-color);">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-weight: 700;">4</div>
+                <h4 style="font-size: 0.95rem;">Module 3: ICAR Agricultural Dosage Specification</h4>
+            </div>
+            <span class="status-chip" id="step4Badge">--</span>
+        </div>
+        <div id="step4Body" style="font-size: 0.875rem;"></div>
+    </div>
+
+    <!-- Pipeline Summary Box -->
+    <div class="card" id="summaryCard" style="display:none; background-color: #f6fdf8; border-color: #c2ebcb;">
+        <h3 class="card-title" style="margin-bottom: 0.75rem; color: #165225;">Execution Summary</h3>
+        <div id="summaryContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const batchId = "{{ batch_doc_id }}";
+
+document.addEventListener('DOMContentLoaded', loadBatchInfo);
+
+async function loadBatchInfo() {
+    try {
+        const res = await fetch(`/api/batches/${batchId}`);
+        const batch = await res.json();
+
+        if (batch.error) {
+            document.getElementById('batchInfoLoading').innerHTML = `<span style="color: var(--status-rejected-text);">Batch not found.</span>`;
+            return;
+        }
+
+        const statusStr = batch.compliance_status || batch.intake_status || 'Pending Review';
+        const chipClass = getStatusChipClass(statusStr);
+
+        const content = document.getElementById('batchInfoContent');
+        content.innerHTML = `
+            <div class="grid grid-3" style="gap: 1.25rem;">
+                <div>
+                    <div class="text-sm text-muted">Compound</div>
+                    <div style="font-weight:700; font-size:1.05rem;">${batch.compound_name}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted">Stock Quantity</div>
+                    <div style="font-weight:700; font-size:1.05rem;">${batch.batch_qty_kg} kg</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted">Source Location</div>
+                    <div style="font-weight:600;">${batch.source_location}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted">Facility Type</div>
+                    <div>${batch.source_type}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted">Expiry Date</div>
+                    <div>${batch.expiry_date} (${batch.days_to_expiry} days)</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted">Current Ledger Status</div>
+                    <div><span class="status-chip ${chipClass}">${statusStr}</span></div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('batchInfoLoading').style.display = 'none';
+        content.style.display = 'block';
+
+        // Auto-load pipeline if already processed or has compliance_status
+        if (batch.compliance_status) {
+            processBatch(true);
+        }
+    } catch (e) {
+        document.getElementById('batchInfoLoading').innerHTML = '<span style="color: var(--status-rejected-text);">Error loading batch info.</span>';
+    }
+}
+
+async function processBatch(isAutoLoad = false) {
+    const btn = document.getElementById('btnProcess');
+    const statusText = document.getElementById('processStatusText');
+    btn.disabled = true;
+    btn.textContent = 'Executing Pipeline...';
+    statusText.textContent = '';
+
+    const resultsDiv = document.getElementById('pipelineResults');
+    resultsDiv.style.display = 'block';
+
+    try {
+        const res = await fetch(`/api/process_batch/${batchId}`, { method: 'POST' });
+        const data = await res.json();
+
+        if (data.already_processed || isAutoLoad) {
+            document.getElementById('alreadyProcessedBanner').style.display = 'flex';
+            btn.textContent = 'Pipeline Completed';
+        } else {
+            btn.textContent = 'Run Full Pipeline Again';
+        }
+
+        renderStep1(data.compliance);
+        if (data.geolocation) renderStep2(data.geolocation);
+        if (data.matching) renderStep3(data.matching);
+        if (data.dosage) renderStep4(data.dosage);
+        renderSummary(data);
+
+    } catch (e) {
+        console.error('Pipeline processing error:', e);
+        statusText.textContent = 'Error executing pipeline.';
+    } finally {
+        if (!document.getElementById('alreadyProcessedBanner').style.display === 'flex') {
+            btn.disabled = false;
+        }
+    }
+}
+
+function renderStep1(compliance) {
+    const card = document.getElementById('step1Card');
+    const badge = document.getElementById('step1Badge');
+    const body = document.getElementById('step1Body');
+
+    if (compliance.status === 'Accepted') {
+        card.style.borderLeftColor = 'var(--status-accepted-text)';
+        badge.className = 'status-chip status-chip-accepted';
+        badge.textContent = 'Accepted — Whitelisted';
+        body.innerHTML = `
+            <div style="color: var(--status-accepted-text); font-weight: 600;">
+                Compound verified on National Micronutrient Whitelist. Single-compound purity requirement satisfied.
+            </div>
+        `;
+    } else {
+        card.style.borderLeftColor = 'var(--status-rejected-text)';
+        badge.className = 'status-chip status-chip-rejected';
+        badge.textContent = 'Rejected — Non-compliant';
+        body.innerHTML = `
+            <div style="color: var(--status-rejected-text); font-weight: 600;">
+                ${compliance.reason || 'Compound rejected at intake check.'}
+            </div>
+        `;
+    }
+}
+
+function renderStep2(geo) {
+    const card = document.getElementById('step2Card');
+    const badge = document.getElementById('step2Badge');
+    const body = document.getElementById('step2Body');
+    card.style.display = 'block';
+
+    if (geo.error) {
+        card.style.borderLeftColor = 'var(--status-rejected-text)';
+        badge.className = 'status-chip status-chip-rejected';
+        badge.textContent = 'Resolution Error';
+        body.innerHTML = `<div>${geo.error}</div>`;
+    } else {
+        card.style.borderLeftColor = 'var(--accent-olive)';
+        badge.className = 'status-chip status-chip-accepted';
+        badge.textContent = 'Location Resolved';
+        body.innerHTML = `
+            <div class="grid grid-4">
+                <div><span class="text-sm text-muted">State:</span> <strong>${geo.state}</strong></div>
+                <div><span class="text-sm text-muted">District:</span> <strong>${geo.district}</strong></div>
+                <div><span class="text-sm text-muted">Coordinates:</span> <strong>${geo.latitude}, ${geo.longitude}</strong></div>
+                <div><span class="text-sm text-muted">Resolution:</span> <strong>${geo.source}</strong></div>
+            </div>
+        `;
+    }
+}
+
+function renderStep3(match) {
+    const card = document.getElementById('step3Card');
+    const badge = document.getElementById('step3Badge');
+    const body = document.getElementById('step3Body');
+    card.style.display = 'block';
+
+    if (match.error) {
+        card.style.borderLeftColor = 'var(--status-rejected-text)';
+        badge.className = 'status-chip status-chip-rejected';
+        badge.textContent = 'Matching Failed';
+        body.innerHTML = `<div>${match.error}</div>`;
+    } else if (match.matched) {
+        card.style.borderLeftColor = 'var(--accent-earth)';
+        badge.className = 'status-chip status-chip-accepted';
+        badge.textContent = match.match_type === 'same_state' ? 'Same-State Match' : 'Nearest Fallback Match';
+
+        let distText = match.distance_km ? ` (Distance: ${match.distance_km} km)` : '';
+        body.innerHTML = `
+            <div class="grid grid-3">
+                <div><span class="text-sm text-muted">Target State:</span> <strong style="font-size:1.05rem;">${match.target_state}</strong></div>
+                <div><span class="text-sm text-muted">Match Category:</span> <strong>${match.match_type}</strong>${distText}</div>
+                <div><span class="text-sm text-muted">Soil Deficiency Profile:</span> <strong>${match.deficient_nutrients}</strong></div>
+            </div>
+            <p class="text-sm text-muted" style="margin-top:0.5rem;">${match.reason}</p>
+        `;
+    } else {
+        card.style.borderLeftColor = 'var(--status-pending-text)';
+        badge.className = 'status-chip status-chip-pending';
+        badge.textContent = 'No Match Found';
+        body.innerHTML = `<div>${match.reason}</div>`;
+    }
+}
+
+function renderStep4(dosage) {
+    const card = document.getElementById('step4Card');
+    const badge = document.getElementById('step4Badge');
+    const body = document.getElementById('step4Body');
+    card.style.display = 'block';
+
+    if (dosage.error) {
+        card.style.borderLeftColor = 'var(--status-rejected-text)';
+        badge.className = 'status-chip status-chip-rejected';
+        badge.textContent = 'Dosage Error';
+        body.innerHTML = `<div>${dosage.error}</div>`;
+    } else if (dosage.type === 'foliar_spray') {
+        card.style.borderLeftColor = 'var(--primary-color)';
+        badge.className = 'status-chip status-chip-accepted';
+        badge.textContent = 'Foliar Spray Protocol';
+        body.innerHTML = `
+            <div style="background: var(--bg-main); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div style="font-weight:700; color: var(--primary-color); font-size:1.05rem;">${dosage.spec}</div>
+                <div style="font-size:0.82rem; color: var(--text-muted); margin-top:0.25rem;">Note: ${dosage.note}</div>
+                <div style="font-size:0.78rem; color: var(--text-light); margin-top:0.2rem;">Source: ${dosage.source}</div>
+            </div>
+        `;
+    } else {
+        card.style.borderLeftColor = 'var(--primary-color)';
+        badge.className = 'status-chip status-chip-accepted';
+        badge.textContent = 'Soil Application Protocol';
+        body.innerHTML = `
+            <div class="grid grid-4">
+                <div><span class="text-sm text-muted">Base Rate:</span> <strong>${dosage.base_rate_kg_ha} kg/ha</strong></div>
+                <div><span class="text-sm text-muted">Severity Tier:</span> <strong>${dosage.severity_tier}</strong></div>
+                <div><span class="text-sm text-muted">Multiplier:</span> <strong>${dosage.severity_multiplier}x</strong></div>
+                <div><span class="text-sm text-muted">Recommended Rate:</span> <strong style="color: var(--primary-color); font-size:1.1rem;">${dosage.rate_kg_ha} ${dosage.unit}</strong></div>
+            </div>
+            <div style="font-size:0.78rem; color: var(--text-light); margin-top:0.5rem;">Source: ${dosage.source}</div>
+        `;
+    }
+}
+
+function renderSummary(data) {
+    const card = document.getElementById('summaryCard');
+    const content = document.getElementById('summaryContent');
+    card.style.display = 'block';
+
+    if (data.pipeline_complete) {
+        const dosageLabel = data.dosage.type === 'foliar_spray' ?
+            `Foliar spray spec: ${data.dosage.spec}` :
+            `Soil application rate: ${data.dosage.rate_kg_ha} ${data.dosage.unit}`;
+
+        content.innerHTML = `
+            <p style="font-size: 0.95rem; color: #164e20;">
+                <strong>Pipeline Verified &amp; Cleared.</strong> Batch <code>${data.batch_doc_id}</code> (${data.compliance.status}) has been matched to <strong>${data.matching.target_state}</strong> (${data.matching.match_type}) with dosage recommendation: <strong>${dosageLabel}</strong>.
+            </p>
+        `;
+    } else {
+        content.innerHTML = `
+            <p style="font-size: 0.95rem; color: #991b1b;">
+                <strong>Pipeline Halted.</strong> Batch did not complete execution (Stopped at stage: ${data.stopped_at || 'Compliance'}). Reason: ${data.compliance?.reason || data.matching?.reason || 'Non-compliant compound'}.
+            </p>
+        `;
+    }
+}
+
+function getStatusChipClass(status) {
+    if (!status) return 'status-chip-pending';
+    const lower = status.toLowerCase();
+    if (lower.includes('accepted')) return 'status-chip-accepted';
+    if (lower.includes('below purity')) return 'status-chip-purity';
+    if (lower.includes('combination')) return 'status-chip-combo';
+    if (lower.includes('rejected')) return 'status-chip-rejected';
+    if (lower.includes('awaiting')) return 'status-chip-docs';
+    return 'status-chip-pending';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+[
+  {
+    "compound_name": "Ferrous Sulphate",
+    "nutrient": "Fe",
+    "product_reference": "Dried Ferrous Sulphate IP tablets (200mg, ~60mg elemental iron)",
+    "agri_precedent": "Standard agricultural iron fertilizer",
+    "water_soluble": true
+  },
+  {
+    "compound_name": "Zinc Sulphate",
+    "nutrient": "Zn",
+    "product_reference": "Zinc (as sulfate) Dispersible Tablets 20mg - WHO-prequalified, Macleods Pharmaceuticals",
+    "agri_precedent": "Standard agricultural zinc fertilizer",
+    "water_soluble": true
+  },
+  {
+    "compound_name": "Potassium Chloride",
+    "nutrient": "K",
+    "product_reference": "Slow-K / K-Tab 750mg",
+    "agri_precedent": "Muriate of Potash (MOP) - India's dominant potassium fertilizer",
+    "water_soluble": true
+  }
+]

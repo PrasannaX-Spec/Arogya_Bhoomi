@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Compliance Queue{% endblock %}
+{% block page_title %}Pharmaceutical Intake Compliance Queue{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary" id="btnRunBatchCompliance" onclick="triggerRunCompliance()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <span>Run Compliance on Pending</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Module 1 Compliance Rules Overview Banner -->
+<div class="disclaimer-banner" style="background-color: #f0f7f2; border-color: #cce4d2; border-left-color: #2b5439; color: #1c3b27; margin-bottom: 1.5rem;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    <div>
+        <strong>Module 1 Whitelist &amp; Verification Rules:</strong>
+        <span style="font-size: 0.82rem; color: #3a5c46; display: block; margin-top: 0.2rem;">
+            Only single-compound medicines matching approved active pharmaceutical ingredients (Zinc Sulphate, Ferrous Sulphate, Potassium Chloride) are cleared. Combination formulations, unverified compounds, or below-purity stock are rejected.
+        </span>
+    </div>
+</div>
+
+<!-- Status Filter Tabs -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <div class="tab-group" id="complianceTabs">
+            <button class="tab-btn active" onclick="setTab('ALL')">All Batches (<span id="countAll">0</span>)</button>
+            <button class="tab-btn" onclick="setTab('Accepted')">Accepted / Matched (<span id="countAccepted">0</span>)</button>
+            <button class="tab-btn" onclick="setTab('Pending')">Queued for Match / Pending (<span id="countPending">0</span>)</button>
+            <button class="tab-btn" onclick="setTab('Rejected')">Rejected (<span id="countRejected">0</span>)</button>
+            <button class="tab-btn" onclick="setTab('Purity')">Below Purity Threshold (<span id="countPurity">0</span>)</button>
+        </div>
+    </div>
+</div>
+
+<!-- Compliance Table Panel -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">Compliance Verification Queue</h3>
+            <span class="text-sm text-muted">Showing live verification status for intaked batches</span>
+        </div>
+        <div id="complianceActionFeedback" style="font-size: 0.85rem; font-weight: 500; color: var(--primary-color);"></div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Batch ID</th>
+                    <th>Compound Name</th>
+                    <th>Source Facility</th>
+                    <th>Source Location</th>
+                    <th>Compliance Status</th>
+                    <th>Audit Reason / Rule Verdict</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="complianceTableBody">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading compliance queue...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let queueBatches = [];
+let currentTab = 'ALL';
+
+document.addEventListener('DOMContentLoaded', loadComplianceQueue);
+
+async function loadComplianceQueue() {
+    try {
+        const res = await fetch('/api/batches');
+        queueBatches = await res.json();
+        updateTabCounts();
+        renderComplianceTable();
+    } catch (e) {
+        console.error('Failed to load compliance queue:', e);
+    }
+}
+
+function updateTabCounts() {
+    let cAll = queueBatches.length;
+    let cAcc = 0, cPen = 0, cRej = 0, cPur = 0;
+
+    queueBatches.forEach(b => {
+        const st = (b.compliance_status || b.intake_status || 'Pending').toLowerCase();
+        if (st.includes('accepted')) cAcc++;
+        else if (st.includes('pending')) cPen++;
+        else if (st.includes('purity')) { cPur++; cRej++; }
+        else if (st.includes('rejected')) cRej++;
+    });
+
+    document.getElementById('countAll').textContent = cAll;
+    document.getElementById('countAccepted').textContent = cAcc;
+    document.getElementById('countPending').textContent = cPen;
+    document.getElementById('countRejected').textContent = cRej;
+    document.getElementById('countPurity').textContent = cPur;
+}
+
+function setTab(tabName) {
+    currentTab = tabName;
+    const btns = document.querySelectorAll('#complianceTabs .tab-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderComplianceTable();
+}
+
+function renderComplianceTable() {
+    const body = document.getElementById('complianceTableBody');
+    body.innerHTML = '';
+
+    const filtered = queueBatches.filter(b => {
+        const st = (b.compliance_status || b.intake_status || 'Pending').toLowerCase();
+        if (currentTab === 'Accepted') return st.includes('accepted');
+        if (currentTab === 'Pending') return st.includes('pending');
+        if (currentTab === 'Rejected') return st.includes('rejected');
+        if (currentTab === 'Purity') return st.includes('purity');
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No batches found in this category.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(b => {
+        const statusStr = b.compliance_status || b.intake_status || 'Pending Review';
+        const chipClass = getStatusChipClass(statusStr);
+        let reasonStr = 'Approved single-compound medicine listed on national whitelist.';
+
+        if (statusStr.includes('Rejected')) {
+            if (statusStr.includes('Purity')) {
+                reasonStr = 'Failed active ingredient purity assay threshold (< 98.0%).';
+            } else if (b.compound_name === 'Zincovit') {
+                reasonStr = '\'Zincovit\' is not an approved single-compound medicine (multivitamin combination).';
+            } else {
+                reasonStr = `'${b.compound_name}' is not on the approved whitelist.`;
+            }
+        } else if (statusStr.includes('Pending')) {
+            reasonStr = 'Batch queued for automated Module 1 compliance verification.';
+        }
+
+        body.innerHTML += `
+            <tr>
+                <td><code class="font-mono">${b.batch_doc_id}</code></td>
+                <td style="font-weight: 600;">${b.compound_name}</td>
+                <td>${b.source_type}</td>
+                <td>${b.source_location}</td>
+                <td><span class="status-chip ${chipClass}">${statusStr}</span></td>
+                <td style="font-size: 0.82rem; color: var(--text-muted);">${reasonStr}</td>
+                <td><a href="/process/${b.batch_doc_id}" class="btn btn-secondary btn-sm">Run Pipeline</a></td>
+            </tr>
+        `;
+    });
+}
+
+async function triggerRunCompliance() {
+    const btn = document.getElementById('btnRunBatchCompliance');
+    const feedback = document.getElementById('complianceActionFeedback');
+    btn.disabled = true;
+    btn.textContent = 'Running Compliance Check...';
+    feedback.textContent = '';
+
+    try {
+        const res = await fetch('/api/run_compliance', { method: 'POST' });
+        const data = await res.json();
+        feedback.textContent = `Completed! Processed ${data.total_processed} batches: ${data.accepted} accepted, ${data.rejected} rejected.`;
+        loadComplianceQueue();
+    } catch (e) {
+        feedback.textContent = 'Error executing compliance check.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Compliance on Pending';
+    }
+}
+
+function getStatusChipClass(status) {
+    if (!status) return 'status-chip-pending';
+    const lower = status.toLowerCase();
+    if (lower.includes('accepted')) return 'status-chip-accepted';
+    if (lower.includes('below purity')) return 'status-chip-purity';
+    if (lower.includes('combination')) return 'status-chip-combo';
+    if (lower.includes('rejected')) return 'status-chip-rejected';
+    if (lower.includes('awaiting')) return 'status-chip-docs';
+    return 'status-chip-pending';
+}
+</script>
+{% endblock %}

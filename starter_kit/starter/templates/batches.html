@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}Stock Ledger{% endblock %}
+{% block page_title %}Pharmaceutical Stock Ledger{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary" onclick="openLogBatchModal()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>Log New Batch</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Mini Cards -->
+<div class="grid grid-4" style="margin-bottom: 1.5rem;">
+    <div class="kpi-card">
+        <span class="kpi-label">Ledger Batches</span>
+        <span class="kpi-value" id="ledgerTotal">--</span>
+        <span class="kpi-sub" id="ledgerTotalQty">Loading stock...</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Cleared Stock</span>
+        <span class="kpi-value" id="ledgerAccepted" style="color: var(--status-accepted-text);">--</span>
+        <span class="kpi-sub">Ready for soil match</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Pending Review</span>
+        <span class="kpi-value" id="ledgerPending" style="color: var(--status-pending-text);">--</span>
+        <span class="kpi-sub">Awaiting verification</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Rejected Stock</span>
+        <span class="kpi-value" id="ledgerRejected" style="color: var(--status-rejected-text);">--</span>
+        <span class="kpi-sub">Flagged or non-compliant</span>
+    </div>
+</div>
+
+<!-- Stock Ledger Table Panel -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">Intake Inventory Records</h3>
+            <span class="text-sm text-muted">Complete list of registered expired pharmaceutical batches</span>
+        </div>
+        <div class="filter-bar" style="margin-bottom: 0;">
+            <input type="text" class="filter-input" id="searchFilter" placeholder="Search Batch ID, Location..." onkeyup="filterLedger()">
+            <select class="filter-input" id="statusFilter" onchange="filterLedger()">
+                <option value="ALL">All Compliance Statuses</option>
+                <option value="Accepted">Accepted / Cleared</option>
+                <option value="Pending">Pending Review</option>
+                <option value="Rejected">Rejected (All Reasons)</option>
+                <option value="Purity">Below Purity Threshold</option>
+            </select>
+            <select class="filter-input" id="compoundFilter" onchange="filterLedger()">
+                <option value="ALL">All Compounds</option>
+                <option value="Zinc Sulphate">Zinc Sulphate</option>
+                <option value="Ferrous Sulphate">Ferrous Sulphate</option>
+                <option value="Potassium Chloride">Potassium Chloride</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table" id="ledgerTable">
+            <thead>
+                <tr>
+                    <th>Batch ID</th>
+                    <th>Compound Name</th>
+                    <th>Grade / Conc</th>
+                    <th>Quantity (kg)</th>
+                    <th>Expiry Date</th>
+                    <th>Days to Exp</th>
+                    <th>Source Location</th>
+                    <th>Source Type</th>
+                    <th>Compliance Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="ledgerTableBody">
+                <tr><td colspan="10" style="text-align: center; color: var(--text-muted);">Loading ledger batches...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Log New Batch Modal -->
+<div class="modal-overlay" id="logBatchModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="card-title">Log New Pharmaceutical Batch</h3>
+            <button class="modal-close" onclick="closeLogBatchModal()">&times;</button>
+        </div>
+        <form id="logBatchForm" onsubmit="handleLogBatch(event)">
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="formBatchId">Batch Document ID</label>
+                    <input type="text" class="form-control font-mono" id="formBatchId" required placeholder="e.g. BATCH-ZI2026-1046">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="formCompound">Compound Name</label>
+                    <select class="form-control" id="formCompound" required>
+                        <option value="Zinc Sulphate">Zinc Sulphate</option>
+                        <option value="Ferrous Sulphate">Ferrous Sulphate</option>
+                        <option value="Potassium Chloride">Potassium Chloride</option>
+                        <option value="Zincovit">Zincovit (Demo Invalid Compound)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="formQty">Batch Quantity (kg)</label>
+                    <input type="number" step="0.1" class="form-control" id="formQty" required placeholder="e.g. 150.0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="formGrade">Concentration / Grade</label>
+                    <input type="text" class="form-control" id="formGrade" value="21% Zn (heptahydrate)" placeholder="e.g. 21% Zn or N/A">
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="formMfgDate">Manufacture Date</label>
+                    <input type="date" class="form-control" id="formMfgDate" required value="2024-01-01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="formExpDate">Expiry Date</label>
+                    <input type="date" class="form-control" id="formExpDate" required value="2026-01-01">
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="formLocation">Source Location (City, State)</label>
+                    <input type="text" class="form-control" id="formLocation" required placeholder="e.g. Hisar, Haryana">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="formSourceType">Source Facility Type</label>
+                    <select class="form-control" id="formSourceType">
+                        <option value="Retail Pharmacy">Retail Pharmacy</option>
+                        <option value="Distributor">Distributor</option>
+                        <option value="Wholesaler">Wholesaler</option>
+                        <option value="Hospital">Hospital</option>
+                        <option value="Manufacturer Return">Manufacturer Return</option>
+                    </select>
+                </div>
+            </div>
+
+            <p id="formFeedback" style="font-size: 0.85rem; margin-top: 0.5rem;"></p>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeLogBatchModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitBatch">Save Batch to Ledger</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allBatches = [];
+
+document.addEventListener('DOMContentLoaded', loadLedger);
+
+async function loadLedger() {
+    try {
+        const statsRes = await fetch('/api/stats');
+        const stats = await statsRes.json();
+
+        document.getElementById('ledgerTotal').textContent = stats.total_batches;
+        document.getElementById('ledgerTotalQty').textContent = stats.total_qty_kg.toLocaleString() + ' kg total';
+        document.getElementById('ledgerAccepted').textContent = stats.accepted;
+        document.getElementById('ledgerPending').textContent = stats.pending;
+        document.getElementById('ledgerRejected').textContent = stats.rejected;
+
+        const res = await fetch('/api/batches');
+        allBatches = await res.json();
+        renderLedgerTable(allBatches);
+    } catch (e) {
+        console.error('Failed to load ledger:', e);
+    }
+}
+
+function renderLedgerTable(batches) {
+    const body = document.getElementById('ledgerTableBody');
+    body.innerHTML = '';
+
+    if (batches.length === 0) {
+        body.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted);">No matching batches found.</td></tr>`;
+        return;
+    }
+
+    batches.forEach(b => {
+        const statusStr = b.compliance_status || b.intake_status || 'Pending Review';
+        const chipClass = getStatusChipClass(statusStr);
+        const daysClass = b.days_to_expiry < 0 ? 'color: #c53030; font-weight: 600;' : 'color: var(--text-muted);';
+
+        body.innerHTML += `
+            <tr>
+                <td><code class="font-mono">${b.batch_doc_id}</code></td>
+                <td style="font-weight: 600;">${b.compound_name}</td>
+                <td style="font-size: 0.8rem;">${b.zn_concentration_grade || 'N/A'}</td>
+                <td>${b.batch_qty_kg} kg</td>
+                <td style="font-size: 0.8rem;">${b.expiry_date}</td>
+                <td style="${daysClass}">${b.days_to_expiry} days</td>
+                <td>${b.source_location}</td>
+                <td style="font-size: 0.8rem;">${b.source_type}</td>
+                <td><span class="status-chip ${chipClass}">${statusStr}</span></td>
+                <td><a href="/process/${b.batch_doc_id}" class="btn btn-secondary btn-sm">Run Pipeline</a></td>
+            </tr>
+        `;
+    });
+}
+
+function filterLedger() {
+    const search = document.getElementById('searchFilter').value.toLowerCase();
+    const statusVal = document.getElementById('statusFilter').value;
+    const compoundVal = document.getElementById('compoundFilter').value;
+
+    const filtered = allBatches.filter(b => {
+        const statusStr = (b.compliance_status || b.intake_status || 'Pending').toLowerCase();
+        
+        // Search filter
+        const matchSearch = b.batch_doc_id.toLowerCase().includes(search) ||
+                            b.source_location.toLowerCase().includes(search) ||
+                            b.compound_name.toLowerCase().includes(search);
+
+        // Status filter
+        let matchStatus = true;
+        if (statusVal === 'Accepted') matchStatus = statusStr.includes('accepted');
+        else if (statusVal === 'Pending') matchStatus = statusStr.includes('pending');
+        else if (statusVal === 'Rejected') matchStatus = statusStr.includes('rejected');
+        else if (statusVal === 'Purity') matchStatus = statusStr.includes('purity');
+
+        // Compound filter
+        let matchCompound = true;
+        if (compoundVal !== 'ALL') matchCompound = b.compound_name === compoundVal;
+
+        return matchSearch && matchStatus && matchCompound;
+    });
+
+    renderLedgerTable(filtered);
+}
+
+function openLogBatchModal() {
+    // Generate auto Batch ID if empty
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('formBatchId').value = `BATCH-ZI2026-${randomNum}`;
+    document.getElementById('formFeedback').textContent = '';
+    document.getElementById('logBatchModal').classList.add('open');
+}
+
+function closeLogBatchModal() {
+    document.getElementById('logBatchModal').classList.remove('open');
+}
+
+async function handleLogBatch(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitBatch');
+    const feedback = document.getElementById('formFeedback');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    feedback.textContent = '';
+
+    const payload = {
+        batch_doc_id: document.getElementById('formBatchId').value.trim(),
+        compound_name: document.getElementById('formCompound').value,
+        batch_qty_kg: parseFloat(document.getElementById('formQty').value),
+        zn_concentration_grade: document.getElementById('formGrade').value.trim(),
+        manufacture_date: document.getElementById('formMfgDate').value,
+        expiry_date: document.getElementById('formExpDate').value,
+        source_location: document.getElementById('formLocation').value.trim(),
+        source_type: document.getElementById('formSourceType').value
+    };
+
+    try {
+        const res = await fetch('/api/batches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            feedback.style.color = '#166534';
+            feedback.textContent = `Batch ${data.batch_doc_id} logged successfully!`;
+            setTimeout(() => {
+                closeLogBatchModal();
+                loadLedger();
+            }, 800);
+        } else {
+            feedback.style.color = '#991b1b';
+            feedback.textContent = data.error || 'Failed to log batch.';
+        }
+    } catch (err) {
+        feedback.style.color = '#991b1b';
+        feedback.textContent = 'Network error saving batch.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Batch to Ledger';
+    }
+}
+
+function getStatusChipClass(status) {
+    if (!status) return 'status-chip-pending';
+    const lower = status.toLowerCase();
+    if (lower.includes('accepted')) return 'status-chip-accepted';
+    if (lower.includes('below purity')) return 'status-chip-purity';
+    if (lower.includes('combination')) return 'status-chip-combo';
+    if (lower.includes('rejected')) return 'status-chip-rejected';
+    if (lower.includes('awaiting')) return 'status-chip-docs';
+    return 'status-chip-pending';
+}
+</script>
+{% endblock %}

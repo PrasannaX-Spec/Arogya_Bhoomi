@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block title %}Active Matches{% endblock %}
+{% block page_title %}Active Soil-Deficiency Matches{% endblock %}
+
+{% block header_actions %}
+<a href="/batches" class="btn btn-primary btn-sm">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>Process New Match in Ledger</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Subtitle Banner -->
+<div class="disclaimer-banner" style="background-color: #f0f7f2; border-color: #cce4d2; border-left-color: #2b5439; color: #1c3b27; margin-bottom: 1.5rem;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <div>
+        <strong>Verified stock matched to documented micronutrient deficiency.</strong>
+        <span style="font-size: 0.82rem; color: #3a5c46; display: block; margin-top: 0.2rem;">
+            Connecting accepted single-compound pharmaceutical stock with documented agricultural deficiency regions under ICAR dosage guidelines.
+        </span>
+    </div>
+</div>
+
+<!-- Dynamic KPI Summary Cards -->
+<div class="grid grid-4" style="margin-bottom: 1.5rem;">
+    <div class="kpi-card">
+        <span class="kpi-label">Active Matches</span>
+        <span class="kpi-value" id="kpiActiveMatches">--</span>
+        <span class="kpi-sub">Verified pairings</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Total Matched Stock</span>
+        <span class="kpi-value" id="kpiTotalMatchedQty" style="color: var(--primary-color);">--</span>
+        <span class="kpi-sub" id="kpiTotalMatchedQtySub">Loading volume...</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Severe Deficiency Matches</span>
+        <span class="kpi-value" id="kpiSevereMatches" style="color: var(--status-pending-text);">--</span>
+        <span class="kpi-sub">High priority deployment</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Pending Partner Handoff</span>
+        <span class="kpi-value" id="kpiPendingHandoff" style="color: var(--status-accepted-text);">--</span>
+        <span class="kpi-sub">Queued for reprocessing</span>
+    </div>
+</div>
+
+<!-- Active Matches Table Panel -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">Actionable Recovery Pairings</h3>
+            <span class="text-sm text-muted">Stock batches paired with soil deficiency zones</span>
+        </div>
+        <div class="filter-bar" style="margin-bottom: 0;">
+            <input type="text" class="filter-input" id="matchSearch" placeholder="Search Batch, Location, State..." onkeyup="filterMatches()">
+            <select class="filter-input" id="matchCompoundFilter" onchange="filterMatches()">
+                <option value="ALL">All Compounds</option>
+                <option value="Zinc Sulphate">Zinc Sulphate</option>
+                <option value="Ferrous Sulphate">Ferrous Sulphate</option>
+                <option value="Potassium Chloride">Potassium Chloride</option>
+            </select>
+            <select class="filter-input" id="matchStatusFilter" onchange="filterMatches()">
+                <option value="ALL">All Statuses</option>
+                <option value="Matched">Matched</option>
+                <option value="Ready for Partner">Ready for Partner</option>
+                <option value="Partner Assigned">Partner Assigned</option>
+                <option value="Handoff Pending">Handoff Pending</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Match ID</th>
+                    <th>Batch ID</th>
+                    <th>Compound</th>
+                    <th>Quantity (kg)</th>
+                    <th>Source Location</th>
+                    <th>Target State</th>
+                    <th>Deficiency</th>
+                    <th>Severity</th>
+                    <th>Recommended Application</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="matchesTableBody">
+                <tr><td colspan="11" style="text-align: center; color: var(--text-muted);">Loading active matches...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Match Detail Modal Dialog -->
+<div class="modal-overlay" id="matchDetailModal">
+    <div class="modal-card" style="max-width: 680px;">
+        <div class="modal-header">
+            <div>
+                <h3 class="card-title">Match Intelligence Detail</h3>
+                <span class="text-sm text-muted font-mono" id="modalMatchId">MATCH-000</span>
+            </div>
+            <button class="modal-close" onclick="closeMatchDetailModal()">&times;</button>
+        </div>
+
+        <div id="modalContent">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- Handoff Modal Dialog -->
+<div class="modal-overlay" id="handoffModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="card-title">Record Material Handoff Completion</h3>
+            <button class="modal-close" onclick="closeHandoffModal()">&times;</button>
+        </div>
+
+        <form id="handoffForm" onsubmit="handleHandoffSubmit(event)">
+            <input type="hidden" id="formHandoffMatchId">
+
+            <div class="disclaimer-banner" style="margin-bottom: 1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div style="font-size: 0.8rem;">
+                    Record downstream material transfer to certified reprocessor. Updates match status to Completed and appends a SHA-256 audit event.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="formHandoffDate">Handoff Date</label>
+                <input type="date" class="form-control" id="formHandoffDate" required value="2026-09-05">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="formReceivingFacility">Receiving Partner Facility</label>
+                <input type="text" class="form-control" id="formReceivingFacility" required readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="formReceiptNo">Demo Transfer Receipt Number</label>
+                <input type="text" class="form-control font-mono" id="formReceiptNo" required value="REC-OD-2026-8801">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeHandoffModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitHandoff">Record Handoff &amp; Complete</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allMatches = [];
+
+document.addEventListener('DOMContentLoaded', loadMatches);
+
+async function loadMatches() {
+    try {
+        const res = await fetch('/api/matches');
+        const data = await res.json();
+
+        document.getElementById('kpiActiveMatches').textContent = data.stats.active_matches;
+        document.getElementById('kpiTotalMatchedQty').textContent = data.stats.total_matched_stock_kg.toLocaleString() + ' kg';
+        document.getElementById('kpiTotalMatchedQtySub').textContent = `Across ${data.stats.active_matches} active batches`;
+        document.getElementById('kpiSevereMatches').textContent = data.stats.severe_deficiency_matches;
+        document.getElementById('kpiPendingHandoff').textContent = data.stats.pending_partner_handoff;
+
+        allMatches = data.matches;
+        renderMatchesTable(allMatches);
+    } catch (e) {
+        console.error('Failed to load active matches:', e);
+    }
+}
+
+function renderMatchesTable(matches) {
+    const body = document.getElementById('matchesTableBody');
+    body.innerHTML = '';
+
+    if (matches.length === 0) {
+        body.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted);">No active matches found.</td></tr>`;
+        return;
+    }
+
+    matches.forEach(m => {
+        const chipClass = getMatchStatusChipClass(m.status);
+        const dosageLabel = m.dosage_type === 'foliar_spray' ?
+            `<span style="color: var(--primary-color); font-weight: 600;">Foliar Spray</span>` :
+            `<span style="font-weight: 600;">${m.recommended_dosage}</span>`;
+
+        body.innerHTML += `
+            <tr>
+                <td><code class="font-mono">M-${String(m.match_id).padStart(4, '0')}</code></td>
+                <td><code class="font-mono">${m.batch_id}</code></td>
+                <td style="font-weight: 600;">${m.compound_name}</td>
+                <td>${m.batch_qty_kg} kg</td>
+                <td style="font-size: 0.82rem;">${m.source_location}</td>
+                <td style="font-weight: 600; color: var(--primary-color);">${m.target_state}</td>
+                <td><span class="status-chip status-chip-pending">${m.deficiency_type || 'Deficient'}</span></td>
+                <td>${m.severity || 'Medium'}</td>
+                <td style="font-size: 0.82rem;">${dosageLabel}</td>
+                <td><span class="status-chip ${chipClass}">${m.status || 'Matched'}</span></td>
+                <td><button class="btn btn-secondary btn-sm" onclick="openMatchDetail(${m.match_id})">View Detail</button></td>
+            </tr>
+        `;
+    });
+}
+
+function filterMatches() {
+    const search = document.getElementById('matchSearch').value.toLowerCase();
+    const compoundVal = document.getElementById('matchCompoundFilter').value;
+    const statusVal = document.getElementById('matchStatusFilter').value;
+
+    const filtered = allMatches.filter(m => {
+        const matchSearch = m.batch_id.toLowerCase().includes(search) ||
+                            m.source_location.toLowerCase().includes(search) ||
+                            m.target_state.toLowerCase().includes(search) ||
+                            m.compound_name.toLowerCase().includes(search);
+
+        let matchCompound = true;
+        if (compoundVal !== 'ALL') matchCompound = m.compound_name === compoundVal;
+
+        let matchStatus = true;
+        if (statusVal !== 'ALL') matchStatus = m.status === statusVal;
+
+        return matchSearch && matchCompound && matchStatus;
+    });
+
+    renderMatchesTable(filtered);
+}
+
+async function openMatchDetail(matchId) {
+    try {
+        const res = await fetch(`/api/matches/${matchId}`);
+        const m = await res.json();
+
+        document.getElementById('modalMatchId').textContent = `MATCH ID: M-${String(m.match_id).padStart(4, '0')}`;
+        const content = document.getElementById('modalContent');
+
+        const isFoliar = m.compound_name === 'Ferrous Sulphate' || m.dosage_type === 'foliar_spray';
+
+        const dosageDisplayHtml = isFoliar ? `
+            <div style="background: var(--bg-main); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 0.5rem;">
+                <div style="font-weight: 700; color: var(--primary-color); font-size: 0.95rem;">Foliar Application Protocol</div>
+                <div style="font-weight: 600; margin-top: 0.25rem;">3–4 sprays of 1.0% FeSO₄ at weekly intervals.</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Basis: ICAR Foliar Spray Guidelines for Iron-deficient agricultural soils. (Soil dosage not recommended for Ferrous Sulphate to prevent soil fixation).</div>
+            </div>
+        ` : `
+            <div class="grid grid-3" style="margin-top: 0.5rem;">
+                <div><span class="text-sm text-muted">Recommended Dosage:</span> <strong style="color: var(--primary-color); font-size: 1.05rem;">${m.recommended_dosage}</strong></div>
+                <div><span class="text-sm text-muted">Application Method:</span> <strong>Soil Broadcast / Basal</strong></div>
+                <div><span class="text-sm text-muted">Calculation Basis:</span> <strong>ICAR Soil Standard (${m.severity || 'Medium'} Severity)</strong></div>
+            </div>
+        `;
+
+        const originBadgeHtml = m.origin === 'demo_seed' ?
+            `<span class="status-chip status-chip-docs">Pre-populated Demo Match</span>` :
+            `<span class="status-chip status-chip-accepted">Pipeline Generated Match</span>`;
+
+        let partnerSectionHtml = '';
+
+        if (m.status === 'Completed') {
+            partnerSectionHtml = `
+                <div style="background: #eaf4eb; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #b8e0bc;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: #164e20;">✓ Handoff Completed</div>
+                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-top: 0.2rem;">Partner: ${m.assigned_partner_name}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">Receipt: ${m.handoff_receipt || 'REC-DEMO-001'} | Date: ${m.handoff_date || '2026-09-05'}</div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="/audit?batch_id=${m.batch_id}" class="btn btn-secondary btn-sm">View Audit Chain</a>
+                            <a href="/retests" class="btn btn-primary btn-sm">Soil Re-tests</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (m.assigned_partner_id) {
+            partnerSectionHtml = `
+                <div style="background: #eaf4eb; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #b8e0bc; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.9rem; color: #164e20;">✓ Partner Assigned</div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-top: 0.2rem;">Partner: ${m.assigned_partner_name}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">Assignment Timestamp: ${m.assigned_at}</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="openHandoffModal(${m.match_id}, '${m.assigned_partner_name}')">Record Handoff</button>
+                        <a href="/partners?match_id=${m.match_id}" class="btn btn-secondary btn-sm">Change Partner</a>
+                    </div>
+                </div>
+            `;
+        } else {
+            partnerSectionHtml = `
+                <div style="background: var(--bg-main); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Next Step: Partner Reprocessing &amp; Routing</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">Route verified material to a certified extraction partner.</div>
+                    </div>
+                    <a href="/partners?match_id=${m.match_id}" class="btn btn-primary btn-sm">View Partner Options</a>
+                </div>
+            `;
+        }
+
+        content.innerHTML = `
+            <!-- Section 1: Overview -->
+            <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Match Overview</h4>
+                    ${originBadgeHtml}
+                </div>
+                <div class="grid grid-3">
+                    <div><span class="text-sm text-muted">Batch ID:</span> <code class="font-mono">${m.batch_id}</code></div>
+                    <div><span class="text-sm text-muted">Compound:</span> <strong>${m.compound_name}</strong></div>
+                    <div><span class="text-sm text-muted">Stock Quantity:</span> <strong>${m.batch_qty_kg} kg</strong></div>
+                    <div><span class="text-sm text-muted">Source Location:</span> <div>${m.source_location}</div></div>
+                    <div><span class="text-sm text-muted">Source Facility:</span> <div>${m.source_type}</div></div>
+                    <div><span class="text-sm text-muted">Current Status:</span> <div><span class="status-chip ${getMatchStatusChipClass(m.status)}">${m.status}</span></div></div>
+                </div>
+            </div>
+
+            <!-- Section 2: Deficiency Target -->
+            <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.65rem;">Deficiency Regional Target</h4>
+                <div class="grid grid-3">
+                    <div><span class="text-sm text-muted">Target State:</span> <strong style="color: var(--primary-color); font-size: 1.05rem;">${m.target_state}</strong></div>
+                    <div><span class="text-sm text-muted">Target District (Illustrative):</span> <div>${m.target_district || 'Regional Agricultural Zone'}</div></div>
+                    <div><span class="text-sm text-muted">Deficient Element:</span> <div><span class="status-chip status-chip-pending">${m.deficiency_type}</span></div></div>
+                    <div><span class="text-sm text-muted">Severity Tier:</span> <div>${m.severity || 'Medium'}</div></div>
+                    <div><span class="text-sm text-muted">Data Source:</span> <div style="font-size:0.78rem; color:var(--text-muted);">Authoritative State Soil Baseline</div></div>
+                    <div><span class="text-sm text-muted">Match Category:</span> <div>${m.match_type === 'same_state' ? 'Same-State Match' : 'Nearest Fallback Match'}</div></div>
+                </div>
+            </div>
+
+            <!-- Section 3: Dosage Recommendation -->
+            <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Dosage Recommendation</h4>
+                ${dosageDisplayHtml}
+            </div>
+
+            <!-- Section 4: Why This Match? (Judge-Facing Narrative) -->
+            <div class="disclaimer-banner" style="background-color: #f0f7f2; border-color: #cce4d2; border-left-color: #2b5439; color: #1c3b27; margin-bottom: 1.25rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
+                <div>
+                    <strong style="font-size:0.9rem;">WHY THIS MATCH?</strong>
+                    <p style="font-size: 0.82rem; color: #2d523a; margin-top: 0.25rem; line-height: 1.4;">
+                        ${m.explanation}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Section 5: Partner Routing & Assignment -->
+            ${partnerSectionHtml}
+        `;
+
+        document.getElementById('matchDetailModal').classList.add('open');
+    } catch (e) {
+        console.error('Error loading match detail:', e);
+    }
+}
+
+function closeMatchDetailModal() {
+    document.getElementById('matchDetailModal').classList.remove('open');
+}
+
+function openHandoffModal(matchId, partnerName) {
+    document.getElementById('formHandoffMatchId').value = matchId;
+    document.getElementById('formReceivingFacility').value = partnerName;
+    document.getElementById('handoffModal').classList.add('open');
+}
+
+function closeHandoffModal() {
+    document.getElementById('handoffModal').classList.remove('open');
+}
+
+async function handleHandoffSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitHandoff');
+    btn.disabled = true;
+    btn.textContent = 'Recording Transfer...';
+
+    const matchId = document.getElementById('formHandoffMatchId').value;
+    const payload = {
+        handoff_date: document.getElementById('formHandoffDate').value,
+        receiving_facility: document.getElementById('formReceivingFacility').value,
+        receipt_number: document.getElementById('formReceiptNo').value.trim()
+    };
+
+    try {
+        const res = await fetch(`/api/matches/${matchId}/record-handoff`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            closeHandoffModal();
+            closeMatchDetailModal();
+            loadMatches();
+        } else {
+            alert('Failed to record handoff.');
+        }
+    } catch (err) {
+        alert('Network error recording handoff.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Record Handoff & Complete';
+    }
+}
+
+function getMatchStatusChipClass(status) {
+    if (!status) return 'status-chip-pending';
+    if (status === 'Matched') return 'status-chip-accepted';
+    if (status === 'Ready for Partner') return 'status-chip-pending';
+    if (status === 'Partner Assigned') return 'status-chip-purity';
+    if (status === 'Handoff Pending') return 'status-chip-docs';
+    if (status === 'Completed') return 'status-chip-accepted';
+    return 'status-chip-pending';
+}
+</script>
+{% endblock %}

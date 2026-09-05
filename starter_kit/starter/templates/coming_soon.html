@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ feature_name }}{% endblock %}
+{% block page_title %}{{ feature_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 4rem 2rem;">
+    <div style="width: 64px; height: 64px; background: var(--bg-subtle); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; color: var(--primary-color);">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <h2>{{ feature_name }} Module</h2>
+    <p style="color: var(--text-muted); max-width: 500px; margin: 0.75rem auto 1.5rem auto;">
+        This module is scheduled for implementation in <strong>{{ target_phase }}</strong>. The core Phase 2 navigation, Stock Ledger, and Compliance Queue are active.
+    </p>
+    <div class="disclaimer-banner" style="max-width: 600px; margin: 0 auto; text-align: left;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+            <strong>Phase Checkpoint Control:</strong> Phase 2 scope strictly includes Navigation, Nirmūla rebranding, Stock Ledger, Compliance Queue, "Log New Batch", and dynamic KPI statistics.
+        </div>
+    </div>
+    <div style="margin-top: 2rem;">
+        <a href="/batches" class="btn btn-primary">Go to Stock Ledger</a>
+        <a href="/compliance" class="btn btn-secondary" style="margin-left: 0.5rem;">Go to Compliance Queue</a>
+    </div>
+</div>
+{% endblock %}

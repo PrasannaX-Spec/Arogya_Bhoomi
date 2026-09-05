@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Recovery Network Map{% endblock %}
+{% block page_title %}Interactive India Recovery Network Map{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-secondary btn-sm" id="btnResetView">Reset Map View</button>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Filter Bar -->
+<div class="map-filter-bar">
+    <div class="filter-group">
+        <span class="filter-label">Filter Compound:</span>
+        <select id="filterCompound" class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.8rem;">
+            <option value="All">All Approved Compounds</option>
+            <option value="Ferrous Sulphate">Ferrous Sulphate (Fe)</option>
+            <option value="Zinc Sulphate">Zinc Sulphate (Zn)</option>
+            <option value="Potassium Chloride">Potassium Chloride (K)</option>
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <span class="filter-label">Deficiency Status:</span>
+        <select id="filterStatus" class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.8rem;">
+            <option value="All">All Regions &amp; Statuses</option>
+            <option value="usable">Usable Deficient States</option>
+            <option value="Matched">Matched Batches</option>
+            <option value="Assigned">Partner Assigned</option>
+        </select>
+    </div>
+
+    <div style="margin-left: auto; font-size: 0.78rem; color: var(--text-muted);">
+        Showing <strong id="visibleFlowsCount">0</strong> active traceability recovery flows
+    </div>
+</div>
+
+<!-- Map Container -->
+<div id="map" class="map-container"></div>
+
+<!-- Legend & Disclaimer -->
+<div class="card" style="margin-top: 1rem; margin-bottom: 0;">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.82rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background: #2b5439; display: inline-block;"></span>
+                <span>Pharma Source Location</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background: #d97706; display: inline-block;"></span>
+                <span>Soil-Deficient State</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background: #2563eb; display: inline-block;"></span>
+                <span>Partner Facility</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 24px; height: 3px; background: #2563eb; border-top: 2px dashed #2563eb; display: inline-block;"></span>
+                <span>Traceability Flow</span>
+            </div>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted);">
+            <em>Note: Node connections represent representational recovery flows derived from intake locations &amp; state matching.</em>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map;
+let networkData = null;
+let markersLayer;
+let linesLayer;
+
+document.addEventListener('DOMContentLoaded', initNetworkMap);
+
+async function initNetworkMap() {
+    // Initialize Leaflet Map centered on India
+    map = L.map('map').setView([20.5937, 78.9629], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Nirmūla Recovery Network',
+        maxZoom: 18
+    }).addTo(map);
+
+    markersLayer = L.layerGroup().addTo(map);
+    linesLayer = L.layerGroup().addTo(map);
+
+    document.getElementById('btnResetView').addEventListener('click', () => {
+        map.setView([20.5937, 78.9629], 5);
+    });
+
+    document.getElementById('filterCompound').addEventListener('change', renderNetwork);
+    document.getElementById('filterStatus').addEventListener('change', renderNetwork);
+
+    try {
+        const res = await fetch('/api/network_data');
+        networkData = await res.json();
+        renderNetwork();
+    } catch (e) {
+        console.error('Failed to load network data:', e);
+    }
+}
+
+function renderNetwork() {
+    if (!networkData) return;
+
+    markersLayer.clearLayers();
+    linesLayer.clearLayers();
+
+    const selectedCompound = document.getElementById('filterCompound').value;
+    const selectedStatus = document.getElementById('filterStatus').value;
+
+    let visibleFlows = 0;
+
+    // 1. Render Sources
+    networkData.sources.forEach(src => {
+        if (selectedCompound !== 'All' && src.compound !== selectedCompound) return;
+
+        const circle = L.circleMarker([src.latitude, src.longitude], {
+            radius: 8,
+            fillColor: '#2b5439',
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+        });
+
+        circle.bindPopup(`
+            <div style="font-family: sans-serif; font-size: 13px;">
+                <strong style="color: #183422; font-size: 14px;">SOURCE: ${src.name}</strong><br/>
+                <b>Batch ID:</b> <code>${src.batch_id}</code><br/>
+                <b>Compound:</b> ${src.compound}<br/>
+                <b>Quantity:</b> ${src.quantity_kg} kg<br/>
+                <b>Status:</b> <span class="status-chip status-chip-accepted" style="font-size:10px;">${src.status}</span>
+            </div>
+        `);
+        markersLayer.addLayer(circle);
+    });
+
+    // 2. Render Deficiencies
+    networkData.deficiencies.forEach(def => {
+        if (selectedStatus === 'usable' && def.status !== 'usable') return;
+
+        const circle = L.circleMarker([def.latitude, def.longitude], {
+            radius: 9,
+            fillColor: def.status === 'usable' ? '#d97706' : '#9ca3af',
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.85
+        });
+
+        circle.bindPopup(`
+            <div style="font-family: sans-serif; font-size: 13px;">
+                <strong style="color: #b45309; font-size: 14px;">DEFICIENCY REGION: ${def.name}</strong><br/>
+                <b>Status:</b> ${def.status === 'usable' ? 'Usable Deficient Region' : 'Not Usable'}<br/>
+                <b>Deficient Nutrients:</b> ${def.deficient_nutrients.join(', ')}<br/>
+                <b>Usable Compounds:</b> ${def.usable_compounds.join(', ')}
+            </div>
+        `);
+        markersLayer.addLayer(circle);
+    });
+
+    // 3. Render Partners
+    networkData.partners.forEach(p => {
+        const circle = L.circleMarker([p.latitude, p.longitude], {
+            radius: 8,
+            fillColor: '#2563eb',
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+        });
+
+        circle.bindPopup(`
+            <div style="font-family: sans-serif; font-size: 13px;">
+                <strong style="color: #1d4ed8; font-size: 14px;">PARTNER: ${p.name}</strong><br/>
+                <b>Location:</b> ${p.location}<br/>
+                <b>Supported:</b> ${p.supported_compounds.join(', ')}<br/>
+                <b>Current Capacity:</b> ${p.capacity_kg ? p.capacity_kg + ' kg' : 'Available'}
+            </div>
+        `);
+        markersLayer.addLayer(circle);
+    });
+
+    // 4. Render Connection Flows (Source -> Target -> Partner)
+    networkData.flows.forEach(flow => {
+        if (selectedCompound !== 'All' && flow.compound !== selectedCompound) return;
+
+        if (flow.source && flow.source.latitude && flow.target_deficiency && flow.target_deficiency.latitude) {
+            const latlngs = [
+                [flow.source.latitude, flow.source.longitude],
+                [flow.target_deficiency.latitude, flow.target_deficiency.longitude]
+            ];
+
+            if (flow.assigned_partner && flow.assigned_partner.latitude) {
+                latlngs.push([flow.assigned_partner.latitude, flow.assigned_partner.longitude]);
+            }
+
+            const polyline = L.polyline(latlngs, {
+                color: '#2563eb',
+                weight: 2.5,
+                opacity: 0.7,
+                dashArray: '6, 6'
+            });
+
+            polyline.bindPopup(`
+                <div style="font-family: sans-serif; font-size: 13px;">
+                    <strong>TRACEABILITY RECOVERY FLOW</strong><br/>
+                    <b>Match ID:</b> <code>${flow.match_id}</code><br/>
+                    <b>Batch:</b> <code>${flow.batch_id}</code><br/>
+                    <b>Compound:</b> ${flow.compound} (${flow.quantity_kg} kg)<br/>
+                    <b>Route:</b> ${flow.source.name} &rarr; ${flow.target_deficiency.state}
+                </div>
+            `);
+
+            linesLayer.addLayer(polyline);
+            visibleFlows++;
+        }
+    });
+
+    document.getElementById('visibleFlowsCount').textContent = visibleFlows;
+}
+</script>
+{% endblock %}

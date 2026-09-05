@@ -1,0 +1,37 @@
+{
+  "national_baseline": {
+    "Zn": {"pct_deficient": 49.0, "source": "Naik et al., 2024"},
+    "Fe": {"pct_deficient": 33.0, "source": "Naik et al., 2024 (>33%, one-third)"}
+  },
+  "states": [
+    {"state": "Punjab", "deficient_nutrients": ["Cu", "Mn", "K"], "usable_compounds": ["Potassium Chloride"], "status": "usable"},
+    {"state": "Delhi / NCR", "deficient_nutrients": ["K", "S"], "usable_compounds": ["Potassium Chloride"], "status": "usable"},
+    {"state": "Haryana", "deficient_nutrients": ["S", "Fe", "Cu", "Mn"], "usable_compounds": ["Ferrous Sulphate"], "status": "usable"},
+    {"state": "Rajasthan", "deficient_nutrients": ["S", "Zn", "Fe", "Cu", "Mn"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Gujarat", "deficient_nutrients": ["B", "S", "Zn", "Fe"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Uttar Pradesh", "deficient_nutrients": ["S", "Zn", "Fe", "Cu", "Mn"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Madhya Pradesh", "deficient_nutrients": ["Zn", "S"], "usable_compounds": ["Zinc Sulphate"], "status": "usable"},
+    {"state": "Maharashtra", "deficient_nutrients": ["S", "B", "Fe", "Zn"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Karnataka", "deficient_nutrients": ["Zn", "Fe", "B", "S"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Andhra Pradesh", "deficient_nutrients": ["Zn", "Fe"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Telangana", "deficient_nutrients": ["Zn", "Fe", "Mn"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Tamil Nadu", "deficient_nutrients": ["Fe", "Mn", "Zn", "B"], "usable_compounds": ["Ferrous Sulphate", "Zinc Sulphate"], "status": "usable"},
+    {"state": "Odisha", "deficient_nutrients": ["S", "B", "Zn", "Cu"], "usable_compounds": ["Zinc Sulphate"], "status": "usable"},
+    {"state": "Bihar", "deficient_nutrients": ["Zn"], "usable_compounds": ["Zinc Sulphate"], "status": "usable"},
+    {"state": "Chhattisgarh", "deficient_nutrients": ["Zn"], "usable_compounds": ["Zinc Sulphate"], "status": "usable"},
+    {"state": "Goa", "deficient_nutrients": ["Zn", "Cu", "Mn"], "usable_compounds": ["Zinc Sulphate"], "status": "usable"},
+    {"state": "Jammu & Kashmir", "deficient_nutrients": ["B", "Mn", "Zn"], "usable_compounds": ["Zinc Sulphate"], "status": "usable"},
+    {"state": "Kerala", "deficient_nutrients": ["S", "B", "Mn", "Ca", "Mg"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "West Bengal", "deficient_nutrients": ["S", "B"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Jharkhand", "deficient_nutrients": ["B", "S"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Assam", "deficient_nutrients": ["S", "B", "Cu"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Uttarakhand", "deficient_nutrients": ["S", "B"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Arunachal Pradesh", "deficient_nutrients": ["B"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Manipur", "deficient_nutrients": ["B"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Meghalaya", "deficient_nutrients": ["B"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Mizoram", "deficient_nutrients": ["B"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Nagaland", "deficient_nutrients": ["B", "Mn"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Tripura", "deficient_nutrients": ["Ca", "Mg", "P"], "usable_compounds": [], "status": "not_usable"},
+    {"state": "Sikkim", "deficient_nutrients": ["Ca", "Mg"], "usable_compounds": [], "status": "not_usable"}
+  ]
+}

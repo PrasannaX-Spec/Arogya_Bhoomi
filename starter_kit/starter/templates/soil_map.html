@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Soil Deficiency Map{% endblock %}
+{% block page_title %}National Soil Micronutrient Deficiency Map{% endblock %}
+
+{% block header_actions %}
+<a href="/matches" class="btn btn-primary btn-sm">View Active Matches</a>
+{% endblock %}
+
+{% block content %}
+<!-- Mandatory Disclaimer Banner -->
+<div class="disclaimer-banner">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+        <strong>Illustrative district-level visualization — production matching currently uses state-level deficiency data.</strong>
+        <span style="font-size: 0.82rem; color: #854d0e; display: block; margin-top: 0.2rem;">
+            State-level dataset remains the authoritative source for all current matching and deployment logic. District examples below are for visual demonstration purposes only.
+        </span>
+    </div>
+</div>
+
+<!-- Compound Switcher & Available Stock Filter Control Bar -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 1rem;">
+            <!-- Compound Tabs -->
+            <div class="tab-group" id="compoundTabs">
+                <button class="tab-btn active" onclick="switchCompound('Zinc Sulphate')">Zinc (Zn)</button>
+                <button class="tab-btn" onclick="switchCompound('Ferrous Sulphate')">Iron (Fe)</button>
+                <button class="tab-btn" onclick="switchCompound('Potassium Chloride')">Potassium (K)</button>
+                <button class="tab-btn" onclick="switchCompound('ALL')">All Elements</button>
+            </div>
+
+            <!-- "Has Available Match Stock" Filter Toggle -->
+            <div style="display: flex; align-items: center; gap: 0.65rem; background: var(--bg-main); padding: 0.4rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <input type="checkbox" id="chkHasStock" onchange="toggleAvailableStockFilter()" style="width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer;">
+                <label for="chkHasStock" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); cursor: pointer; user-select: none;">
+                    Has Available Match Stock Only
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Concept Equation Banner -->
+<div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1.5rem; text-align: center; flex-wrap: wrap;">
+    <div>
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Step 1</div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-main);">Soil Deficiency Zone</div>
+    </div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted);">+</div>
+    <div>
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Step 2</div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--primary-color);">Eligible Stock Volume</div>
+    </div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted);">=</div>
+    <div style="background: var(--status-accepted-bg); border: 1px solid var(--status-accepted-border); padding: 0.4rem 1rem; border-radius: 50px;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--status-accepted-text); font-weight: 600;">Actionable Result</div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--status-accepted-text);" id="actionableMatchesCount">Actionable Target Match</div>
+    </div>
+</div>
+
+<!-- State Deficiency Grid -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title" id="gridTitle">Authoritative State Deficiency Data</h3>
+            <span class="text-sm text-muted" id="gridSubtitle">Showing state-level deficiency baseline</span>
+        </div>
+        <span class="status-chip status-chip-accepted" id="gridCountChip">29 States Evaluated</span>
+    </div>
+
+    <div class="grid grid-3" id="stateGrid">
+        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading soil deficiency records...</div>
+    </div>
+</div>
+
+<!-- Curated Illustrative District Layer -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">Illustrative District-Level Visual Layer</h3>
+            <span class="text-sm text-muted">Sample agricultural districts in deficient zones (Demo visualization only)</span>
+        </div>
+        <span class="status-chip status-chip-pending">Visual Layer Only</span>
+    </div>
+
+    <div class="grid grid-4" id="districtGrid">
+        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">Loading illustrative districts...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCompound = 'Zinc Sulphate';
+let hasStockOnly = false;
+
+document.addEventListener('DOMContentLoaded', loadSoilMapData);
+
+async function loadSoilMapData() {
+    try {
+        const query = `/api/soil_deficiency?has_available_stock=${hasStockOnly}&compound=${encodeURIComponent(currentCompound)}`;
+        const res = await fetch(query);
+        const states = await res.json();
+        renderStateCards(states);
+
+        const matchesRes = await fetch('/api/matches');
+        const matchesData = await matchesRes.json();
+        document.getElementById('actionableMatchesCount').textContent = `${matchesData.stats.active_matches} Active Target Matches`;
+
+        const distRes = await fetch('/api/districts');
+        const distData = await distRes.json();
+        renderDistrictCards(distData.illustrative_districts);
+    } catch (e) {
+        console.error('Failed to load soil map data:', e);
+    }
+}
+
+function switchCompound(compName) {
+    currentCompound = compName;
+    const btns = document.querySelectorAll('#compoundTabs .tab-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    document.getElementById('gridTitle').textContent = compName === 'ALL' ? 'Authoritative State Deficiency Data' : `Soil Deficiency Profile: ${compName}`;
+    loadSoilMapData();
+}
+
+function toggleAvailableStockFilter() {
+    hasStockOnly = document.getElementById('chkHasStock').checked;
+    loadSoilMapData();
+}
+
+function renderStateCards(states) {
+    const grid = document.getElementById('stateGrid');
+    grid.innerHTML = '';
+
+    document.getElementById('gridCountChip').textContent = `${states.length} Regions Match Criteria`;
+
+    if (states.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No regions match the current filter selection. (Try unchecking 'Has Available Match Stock').</div>`;
+        return;
+    }
+
+    states.forEach(s => {
+        const isUsable = s.status === 'usable';
+        const hasMatchedStock = s.has_matched_stock;
+        
+        let badgeClass = isUsable ? 'status-chip-accepted' : 'status-chip-rejected';
+        let badgeText = isUsable ? 'Usable Deficiency' : 'Not Usable';
+
+        if (hasMatchedStock) {
+            badgeClass = 'status-chip-accepted';
+            badgeText = 'Stock Matched & Ready';
+        }
+
+        grid.innerHTML += `
+            <div style="background: var(--bg-card); border: 1px solid ${hasMatchedStock ? 'var(--status-accepted-border)' : 'var(--border-color)'}; border-radius: var(--radius-md); padding: 1.15rem; box-shadow: var(--shadow-sm); position: relative;">
+                ${hasMatchedStock ? `<div style="position: absolute; top: -8px; right: 12px; background: var(--primary-color); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 50px;">MATCHABLE STOCK AVAILABLE</div>` : ''}
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; margin-top: 4px;">
+                    <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">${s.state}</h4>
+                    <span class="status-chip ${badgeClass}">${badgeText}</span>
+                </div>
+                <div style="font-size: 0.82rem; margin-top: 0.5rem;">
+                    <div style="color: var(--text-muted);">Deficient Nutrients:</div>
+                    <div style="font-weight: 600; color: var(--text-main);">${s.deficient_nutrients}</div>
+                </div>
+                <div style="font-size: 0.82rem; margin-top: 0.4rem;">
+                    <div style="color: var(--text-muted);">Usable Recovery Compounds:</div>
+                    <div style="font-weight: 600; color: var(--primary-color);">${s.usable_compounds}</div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function renderDistrictCards(districts) {
+    const grid = document.getElementById('districtGrid');
+    grid.innerHTML = '';
+
+    districts.forEach(d => {
+        grid.innerHTML += `
+            <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+                <div style="font-weight: 700; font-size: 0.95rem; color: var(--primary-color);">${d.district}</div>
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem;">${d.state}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">${d.region_note}</div>
+            </div>
+        `;
+    });
+}
+</script>
+{% endblock %}

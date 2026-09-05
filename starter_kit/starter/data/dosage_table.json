@@ -1,0 +1,23 @@
+{
+  "note": "General Recommended Dose (GRD) with +-25% severity adjustment, per ICAR AICRP-STCR framework. Base rates below are ICAR Indian Farming (75(06), June 2025) general recommendations. Low soil-test category = GRD+25%, Medium = GRD as-is, High = GRD-25%.",
+  "compounds": {
+    "Zinc Sulphate": {
+      "base_rate_kg_ha": 37.5,
+      "unit": "kg ZnSO4/ha (33% Zn grade) - adjust if 21% grade used, see zn_concentration_grade",
+      "severity_adjustment": {"Low": 1.25, "Medium": 1.0, "High": 0.75},
+      "source": "ICAR, Indian Farming 75(06), June 2025"
+    },
+    "Ferrous Sulphate": {
+      "base_rate_kg_ha": null,
+      "note": "ICAR recommends foliar route for Fe, not soil kg/ha - see foliar_spec below",
+      "foliar_spec": "3-4 sprays of 1.0% ferrous sulphate (FeSO4, 20% Fe) at weekly intervals",
+      "source": "ICAR, Indian Farming 75(06), June 2025"
+    },
+    "Potassium Chloride": {
+      "base_rate_kg_ha": 30,
+      "unit": "kg K2O/ha (~50 kg MOP/ha)",
+      "severity_adjustment": {"Low": 1.25, "Medium": 1.0, "High": 0.75},
+      "source": "ICAR, Indian Farming 75(06), June 2025 (rice GRD, medium fertile soils)"
+    }
+  }
+}

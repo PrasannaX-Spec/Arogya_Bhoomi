@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Environmental Impact{% endblock %}
+{% block page_title %}Environmental &amp; Agricultural Impact Calculator{% endblock %}
+
+{% block header_actions %}
+<a href="/simulator" class="btn btn-primary btn-sm">Launch Recovery Simulator</a>
+{% endblock %}
+
+{% block content %}
+<div class="command-header" style="background: linear-gradient(135deg, #1e3a29 0%, #345c43 100%);">
+    <h2 style="color: #ffffff !important;">Environmental &amp; Agricultural Impact Assessment</h2>
+    <p>Translating tracked pharmaceutical waste intake into verified, quantifiable micronutrient soil restoration metrics across Indian agricultural regions.</p>
+</div>
+
+<!-- Impact Snapshot Card Grid -->
+<div class="impact-snapshot-grid" style="margin-bottom: 1.5rem;">
+    <div class="snapshot-step-card card-hover-effect">
+        <div class="snapshot-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div class="snapshot-value" id="impStock">-- kg</div>
+        <div class="snapshot-label">Pharma Waste Diverted</div>
+        <div class="snapshot-sub">Prevented landfill / incineration</div>
+    </div>
+
+    <div class="snapshot-step-card card-hover-effect">
+        <div class="snapshot-icon" style="background:#eef6f0; color:#2b5439;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="snapshot-value" id="impElemental">-- kg</div>
+        <div class="snapshot-label">Elemental Micronutrients</div>
+        <div class="snapshot-sub">Recovered Fe, Zn &amp; K active elements</div>
+    </div>
+
+    <div class="snapshot-step-card card-hover-effect">
+        <div class="snapshot-icon" style="background:#fef5e7; color:#b45309;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        <div class="snapshot-value" id="impArea">-- ha</div>
+        <div class="snapshot-label">Addressable Farmland</div>
+        <div class="snapshot-sub">ICAR GRD reference capacity</div>
+    </div>
+
+    <div class="snapshot-step-card card-hover-effect">
+        <div class="snapshot-icon" style="background:#edf2f7; color:#2b6cb0;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="snapshot-value" id="impMatches">--</div>
+        <div class="snapshot-label">Deficiency Target Matches</div>
+        <div class="snapshot-sub">Verified state soil allocations</div>
+    </div>
+</div>
+
+<!-- Detailed Elemental Nutrient Breakdown -->
+<div class="grid grid-3" style="margin-bottom: 1.5rem;">
+    <div class="card card-hover-effect">
+        <div class="card-header">
+            <h3 class="card-title">Iron (Fe) Recovery</h3>
+            <span class="status-chip status-chip-accepted">Ferrous Sulphate</span>
+        </div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.25rem;" id="feKg">-- kg</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Pure elemental Fe content (20.1% chemical concentration grade)</div>
+        <div style="background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.78rem; color: var(--text-main);">
+            <strong>Agronomic Application:</strong> Prescribed as a 1.0% foliar spray spec (3–4 weekly sprays during vegetative growth) for iron-chlorotic soils.
+        </div>
+    </div>
+
+    <div class="card card-hover-effect">
+        <div class="card-header">
+            <h3 class="card-title">Zinc (Zn) Recovery</h3>
+            <span class="status-chip status-chip-accepted">Zinc Sulphate</span>
+        </div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: var(--accent-olive); margin-bottom: 0.25rem;" id="znKg">-- kg</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Pure elemental Zn content (21.0% / 33.0% grade)</div>
+        <div style="background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.78rem; color: var(--text-main);">
+            <strong>Agronomic Application:</strong> Base soil application rate of 37.5 kg/ha for medium deficiency severity to restore paddy/maize yield.
+        </div>
+    </div>
+
+    <div class="card card-hover-effect">
+        <div class="card-header">
+            <h3 class="card-title">Potassium (K) Recovery</h3>
+            <span class="status-chip status-chip-accepted">Potassium Chloride</span>
+        </div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: var(--accent-earth); margin-bottom: 0.25rem;" id="kKg">-- kg</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Pure elemental K content (52.4% chemical concentration grade)</div>
+        <div style="background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.78rem; color: var(--text-main);">
+            <strong>Agronomic Application:</strong> Base soil application rate of 40.0 kg/ha for medium deficiency severity to improve drought tolerance.
+        </div>
+    </div>
+</div>
+
+<!-- Methodology & Formula Transparency -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Calculation Methodology &amp; Dynamic Formulas</h3>
+        <span class="text-sm text-muted">Transparent agronomic reference logic</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.85rem;">
+        <div style="border-left: 3px solid var(--primary-color); padding-left: 1rem;">
+            <strong>1. Pharmaceutical Stock Diverted:</strong>
+            <p class="text-muted">Sum of <code>batch_qty_kg</code> across all 45 intake records logged in the compliance database.</p>
+        </div>
+
+        <div style="border-left: 3px solid var(--accent-olive); padding-left: 1rem;">
+            <strong>2. Elemental Nutrient Calculation:</strong>
+            <p class="text-muted">Derived using stoichiometric active mineral ratios: Ferrous Sulphate (Fe: 20.1%), Zinc Sulphate (Zn: 21.0% / 33.0%), Potassium Chloride (K: 52.4%).</p>
+        </div>
+
+        <div style="border-left: 3px solid var(--accent-earth); padding-left: 1rem;">
+            <strong>3. Addressable Agricultural Farmland (Hectares):</strong>
+            <p class="text-muted">Calculated as <code>(Zinc Qty ÷ 37.5 kg/ha) + (KCl Qty ÷ 40.0 kg/ha) + (FeSO4 Qty ÷ 12.5 kg/ha eq)</code> using ICAR General Recommended Dosage (GRD) ±25% baseline rates.</p>
+        </div>
+    </div>
+
+    <div class="disclaimer-banner" style="margin-top: 1.5rem; margin-bottom: 0;">
+        <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+            <strong>Transparent Impact Disclaimer:</strong> Metrics displayed on this page reflect potential addressable agricultural capacity derived dynamically from active platform intake stock and ICAR reference application rates. They represent potential regional soil enrichment capacity.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', loadImpactData);
+
+async function loadImpactData() {
+    try {
+        const res = await fetch('/api/impact_stats');
+        const data = await res.json();
+
+        document.getElementById('impStock').textContent = data.pharma_stock_tracked_kg.toLocaleString() + ' kg';
+        document.getElementById('impElemental').textContent = data.elemental_nutrients_kg.total_elemental.toLocaleString() + ' kg';
+        document.getElementById('impArea').textContent = data.addressable_hectares.toLocaleString() + ' ha';
+        document.getElementById('impMatches').textContent = data.soil_deficiency_matches;
+
+        document.getElementById('feKg').textContent = data.elemental_nutrients_kg.iron_fe.toLocaleString() + ' kg';
+        document.getElementById('znKg').textContent = data.elemental_nutrients_kg.zinc_zn.toLocaleString() + ' kg';
+        document.getElementById('kKg').textContent = data.elemental_nutrients_kg.potassium_k.toLocaleString() + ' kg';
+    } catch (e) {
+        console.error('Failed to load impact stats:', e);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{
+  "disclaimer": "Illustrative district-level visualization — production matching currently uses state-level deficiency data.",
+  "illustrative_districts": [
+    {
+      "district": "Sriganganagar",
+      "state": "Rajasthan",
+      "region_note": "Canal-irrigated agricultural zone with documented micronutrient stress"
+    },
+    {
+      "district": "Hisar",
+      "state": "Haryana",
+      "region_note": "Intensive wheat-rice cropping belt with zinc & iron depletion"
+    },
+    {
+      "district": "Bidar",
+      "state": "Karnataka",
+      "region_note": "North Karnataka semi-arid zone with documented zinc deficiency"
+    },
+    {
+      "district": "Nagpur",
+      "state": "Maharashtra",
+      "region_note": "Citrus & cotton belt with soil micronutrient requirements"
+    },
+    {
+      "district": "Ludhiana",
+      "state": "Punjab",
+      "region_note": "High-yield agricultural plain requiring micro-element replenishment"
+    },
+    {
+      "district": "Coimbatore",
+      "state": "Tamil Nadu",
+      "region_note": "Western agricultural zone with targeted soil recovery needs"
+    },
+    {
+      "district": "Bhopal",
+      "state": "Madhya Pradesh",
+      "region_note": "Central black soil agricultural region"
+    },
+    {
+      "district": "Bhubaneswar",
+      "state": "Odisha",
+      "region_note": "Coastal plain with acidic soil and zinc deficiency profile"
+    }
+  ]
+}

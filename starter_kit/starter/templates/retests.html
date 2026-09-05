@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Soil Re-test Feedback{% endblock %}
+{% block page_title %}Soil Re-test Feedback Loop{% endblock %}
+
+{% block header_actions %}
+<a href="/matches" class="btn btn-primary btn-sm">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
+    <span>View Completed Matches</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Subtitle & Data Honesty Banner -->
+<div class="disclaimer-banner" style="background-color: #f0f7f2; border-color: #cce4d2; border-left-color: #2b5439; color: #1c3b27; margin-bottom: 1.5rem;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <div>
+        <strong>Post-application observations returned to the matching workflow.</strong>
+        <span style="font-size: 0.82rem; color: #3a5c46; display: block; margin-top: 0.2rem;">
+            Records empirical soil observations post-deployment. Feedback is stored for analytical verification and audit chain tracking (does not automatically mutate authoritative national baseline data).
+        </span>
+    </div>
+</div>
+
+<!-- Dynamic KPI Summary Cards -->
+<div class="grid grid-4" style="margin-bottom: 1.5rem;">
+    <div class="kpi-card">
+        <span class="kpi-label">Pending Re-tests</span>
+        <span class="kpi-value" id="kpiPendingRetests" style="color: var(--status-pending-text);">--</span>
+        <span class="kpi-sub">Awaiting field observation</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Completed Re-tests</span>
+        <span class="kpi-value" id="kpiCompletedRetests" style="color: var(--status-accepted-text);">--</span>
+        <span class="kpi-sub">Field results recorded</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Improvement Observed</span>
+        <span class="kpi-value" id="kpiImprovedRetests" style="color: var(--primary-color);">--</span>
+        <span class="kpi-sub">Positive soil recovery</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">Review Required</span>
+        <span class="kpi-value" id="kpiReviewRetests" style="color: var(--status-rejected-text);">--</span>
+        <span class="kpi-sub">No change or worsened</span>
+    </div>
+</div>
+
+<!-- Re-test Records Table Panel -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">Post-Deployment Monitoring Ledger</h3>
+            <span class="text-sm text-muted">Field re-tests associated with completed stock deployments</span>
+        </div>
+        <div class="tab-group" id="retestTabs">
+            <button class="tab-btn active" onclick="filterRetests('ALL')">All Re-tests</button>
+            <button class="tab-btn" onclick="filterRetests('Pending')">Pending</button>
+            <button class="tab-btn" onclick="filterRetests('Completed')">Completed</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Re-test ID</th>
+                    <th>Match ID</th>
+                    <th>Batch ID</th>
+                    <th>Target Region</th>
+                    <th>Compound</th>
+                    <th>Application Date</th>
+                    <th>Status</th>
+                    <th>Severity Change / Outcome</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="retestTableBody">
+                <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">Loading re-test records...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Enter Result Modal -->
+<div class="modal-overlay" id="retestModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="card-title">Record Soil Re-test Observation</h3>
+            <button class="modal-close" onclick="closeRetestModal()">&times;</button>
+        </div>
+
+        <form id="retestForm" onsubmit="handleRetestSubmit(event)">
+            <input type="hidden" id="formRetestId">
+
+            <div class="disclaimer-banner" style="margin-bottom: 1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div style="font-size: 0.8rem;">
+                    Enter actual empirical soil laboratory measurements. Results update the audit chain and feed future analysis.
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="formPreSeverity">Pre-Application Severity</label>
+                    <select class="form-control" id="formPreSeverity" required>
+                        <option value="Severe">Severe</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="formPostSeverity">Post-Application Severity</label>
+                    <select class="form-control" id="formPostSeverity" required>
+                        <option value="Moderate">Moderate (Recovered)</option>
+                        <option value="Adequate">Adequate (Optimum)</option>
+                        <option value="Low">Low</option>
+                        <option value="Severe">Severe (Unchanged)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="formBeforeVal">Before Value (Baseline)</label>
+                    <input type="text" class="form-control" id="formBeforeVal" required value="Severe deficiency (1.2 ppm)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="formAfterVal">After Value (Observed)</label>
+                    <input type="text" class="form-control" id="formAfterVal" required value="Moderate recovery (2.4 ppm)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="formOutcome">Empirical Outcome</label>
+                <select class="form-control" id="formOutcome" required>
+                    <option value="Improved">Improved (Positive Recovery)</option>
+                    <option value="No Significant Change">No Significant Change (Review Required)</option>
+                    <option value="Worsened">Worsened (Investigation Required)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="formNotes">Field Notes / Laboratory Reference</label>
+                <textarea class="form-control" id="formNotes" rows="2" placeholder="e.g. Soil core sample analyzed at State ICAR Partner Lab under Ref #SL-2026-904"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeRetestModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitRetest">Submit Field Observation</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allRetests = [];
+let currentFilter = 'ALL';
+
+document.addEventListener('DOMContentLoaded', loadRetestsPage);
+
+async function loadRetestsPage() {
+    try {
+        const res = await fetch('/api/retests');
+        const data = await res.json();
+
+        // Update KPIs dynamically
+        document.getElementById('kpiPendingRetests').textContent = data.stats.pending_retests;
+        document.getElementById('kpiCompletedRetests').textContent = data.stats.completed_retests;
+        document.getElementById('kpiImprovedRetests').textContent = data.stats.improvement_observed;
+        document.getElementById('kpiReviewRetests').textContent = data.stats.review_required;
+
+        allRetests = data.retests;
+        renderRetestsTable();
+    } catch (e) {
+        console.error('Error loading re-test feedback:', e);
+    }
+}
+
+function filterRetests(statusKey) {
+    currentFilter = statusKey;
+    const btns = document.querySelectorAll('#retestTabs .tab-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderRetestsTable();
+}
+
+function renderRetestsTable() {
+    const body = document.getElementById('retestTableBody');
+    body.innerHTML = '';
+
+    const filtered = allRetests.filter(r => {
+        if (currentFilter === 'Pending') return r.retest_status === 'Pending';
+        if (currentFilter === 'Completed') return r.retest_status === 'Completed';
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted);">No re-test records match criteria.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(r => {
+        const isCompleted = r.retest_status === 'Completed';
+        const statusChip = isCompleted ? `<span class="status-chip status-chip-accepted">Completed</span>` : `<span class="status-chip status-chip-pending">Pending Field Test</span>`;
+
+        let outcomeHtml = '<span style="color: var(--text-muted);">Awaiting post-application sampling</span>';
+        if (isCompleted) {
+            const outcomeColor = r.improvement === 'Improved' ? 'var(--primary-color)' : '#c53030';
+            outcomeHtml = `
+                <div style="font-weight: 700; color: ${outcomeColor}; font-size: 0.85rem;">${r.improvement || 'Completed'}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">${r.initial_severity} &rarr; ${r.retest_severity || 'Moderate'}</div>
+            `;
+        }
+
+        body.innerHTML += `
+            <tr>
+                <td><code class="font-mono">R-${String(r.retest_id).padStart(4, '0')}</code></td>
+                <td><code class="font-mono">M-${String(r.match_id).padStart(4, '0')}</code></td>
+                <td><code class="font-mono">${r.batch_id}</code></td>
+                <td style="font-weight: 600;">${r.target_district}, ${r.target_state}</td>
+                <td>${r.compound}</td>
+                <td style="font-size: 0.8rem;">${r.application_date || '2026-09-05'}</td>
+                <td>${statusChip}</td>
+                <td>${outcomeHtml}</td>
+                <td>
+                    ${isCompleted ? `
+                        <a href="/audit?batch_id=${r.batch_id}" class="btn btn-secondary btn-sm">View Audit Chain</a>
+                    ` : `
+                        <button class="btn btn-primary btn-sm" onclick="openRetestModal(${r.retest_id})">Enter Result</button>
+                    `}
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function openRetestModal(retestId) {
+    document.getElementById('formRetestId').value = retestId;
+    document.getElementById('retestModal').classList.add('open');
+}
+
+function closeRetestModal() {
+    document.getElementById('retestModal').classList.remove('open');
+}
+
+async function handleRetestSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitRetest');
+    btn.disabled = true;
+    btn.textContent = 'Saving Observation...';
+
+    const retestId = document.getElementById('formRetestId').value;
+    const payload = {
+        initial_severity: document.getElementById('formPreSeverity').value,
+        retest_severity: document.getElementById('formPostSeverity').value,
+        before_value: document.getElementById('formBeforeVal').value.trim(),
+        after_value: document.getElementById('formAfterVal').value.trim(),
+        outcome: document.getElementById('formOutcome').value,
+        feedback_notes: document.getElementById('formNotes').value.trim()
+    };
+
+    try {
+        const res = await fetch(`/api/retests/${retestId}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            closeRetestModal();
+            loadRetestsPage();
+        } else {
+            alert('Failed to submit re-test observation.');
+        }
+    } catch (err) {
+        alert('Network error saving re-test result.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Field Observation';
+    }
+}
+</script>
+{% endblock %}

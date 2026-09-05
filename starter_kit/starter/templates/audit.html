@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Audit Trail &amp; Hashes{% endblock %}
+{% block page_title %}Tamper-Evident Hash-Linked Audit Trail{% endblock %}
+
+{% block header_actions %}
+<a href="/batches" class="btn btn-secondary btn-sm">Select Batch in Stock Ledger</a>
+{% endblock %}
+
+{% block content %}
+<!-- Architectural Notice Banner -->
+<div class="disclaimer-banner" style="background-color: #f0f7f2; border-color: #cce4d2; border-left-color: #2b5439; color: #1c3b27; margin-bottom: 1.5rem;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <div>
+        <strong>Application-level audit integrity mechanism — not blockchain infrastructure.</strong>
+        <span style="font-size: 0.82rem; color: #3a5c46; display: block; margin-top: 0.2rem;">
+            Every batch lifecycle event is recorded in an append-only SQLite ledger using canonical SHA-256 hash linking (previous_hash pointer). The chain can be cryptographically verified at any time.
+        </span>
+    </div>
+</div>
+
+<!-- Batch Selector & Chain Verification Card -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div>
+                <label class="form-label" for="auditBatchSelect" style="margin-bottom: 0.2rem;">Select Batch ID</label>
+                <select class="form-control font-mono" id="auditBatchSelect" onchange="loadBatchAuditChain()" style="min-width: 260px;">
+                    <option value="">Loading batches...</option>
+                </select>
+            </div>
+            <div style="margin-top: 1.25rem;">
+                <button class="btn btn-primary" id="btnVerifyChain" onclick="verifyChainIntegrity()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span>Verify Chain Integrity</span>
+                </button>
+            </div>
+        </div>
+
+        <div style="text-align: right;">
+            <div id="chainVerifiedBadge" class="status-chip status-chip-accepted" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+                Loading audit state...
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;" id="chainVerificationStatusText">
+                -- of -- recorded events verified
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Panel -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title" id="timelineTitle">Batch Audit Lifecycle Timeline</h3>
+            <span class="text-sm text-muted">Append-only cryptographic event log</span>
+        </div>
+        <span class="status-chip status-chip-docs">Append-Only Ledger</span>
+    </div>
+
+    <div id="timelineContainer" style="padding: 1rem 0;">
+        <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Select a batch to load its audit chain.</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentAuditBatchId = '';
+
+document.addEventListener('DOMContentLoaded', initAuditPage);
+
+async function initAuditPage() {
+    try {
+        const res = await fetch('/api/batches');
+        const batches = await res.json();
+        const select = document.getElementById('auditBatchSelect');
+        select.innerHTML = '';
+
+        batches.forEach(b => {
+            select.innerHTML += `<option value="${b.batch_doc_id}">${b.batch_doc_id} (${b.compound_name})</option>`;
+        });
+
+        // Default to first batch or BATCH-ZI2026-1014 if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const batchParam = urlParams.get('batch_id');
+
+        if (batchParam && batches.some(b => b.batch_doc_id === batchParam)) {
+            select.value = batchParam;
+        } else if (batches.some(b => b.batch_doc_id === 'BATCH-ZI2026-1014')) {
+            select.value = 'BATCH-ZI2026-1014';
+        } else if (batches.length > 0) {
+            select.value = batches[0].batch_doc_id;
+        }
+
+        loadBatchAuditChain();
+    } catch (e) {
+        console.error('Error initializing audit page:', e);
+    }
+}
+
+async function loadBatchAuditChain() {
+    const batchId = document.getElementById('auditBatchSelect').value;
+    if (!batchId) return;
+
+    currentAuditBatchId = batchId;
+    document.getElementById('timelineTitle').textContent = `Audit Lifecycle Timeline: ${batchId}`;
+
+    try {
+        const res = await fetch(`/api/audit/${batchId}`);
+        const data = await res.json();
+
+        updateVerificationUI(data.verification);
+        renderTimeline(data.events, data.batch_id);
+    } catch (e) {
+        console.error('Error loading audit chain:', e);
+    }
+}
+
+function updateVerificationUI(ver) {
+    const badge = document.getElementById('chainVerifiedBadge');
+    const text = document.getElementById('chainVerificationStatusText');
+
+    text.textContent = ver.status || `${ver.event_count} of ${ver.event_count} recorded events verified`;
+
+    if (ver.verified) {
+        badge.className = 'status-chip status-chip-accepted';
+        badge.innerHTML = `✓ Audit Chain Verified`;
+    } else {
+        badge.className = 'status-chip status-chip-rejected';
+        badge.innerHTML = `⚠ Integrity Check Failed`;
+    }
+}
+
+function renderTimeline(events, batchId) {
+    const container = document.getElementById('timelineContainer');
+    container.innerHTML = '';
+
+    if (events.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No audit events recorded for batch ${batchId}.</div>`;
+        return;
+    }
+
+    let html = `<div style="position: relative; padding-left: 2rem; border-left: 2px dashed var(--border-color); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">`;
+
+    events.forEach((ev, idx) => {
+        const isGenesis = ev.previous_event_hash === 'GENESIS';
+        const hashShort = ev.event_hash ? `${ev.event_hash.substring(0, 10)}...${ev.event_hash.substring(ev.event_hash.length - 6)}` : 'N/A';
+        const prevShort = isGenesis ? 'GENESIS' : `${ev.previous_event_hash.substring(0, 10)}...${ev.previous_event_hash.substring(ev.previous_event_hash.length - 6)}`;
+
+        html += `
+            <div style="position: relative;">
+                <!-- Step Circle Marker -->
+                <div style="position: absolute; left: -2.6rem; top: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--primary-color); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700;">
+                    ${idx + 1}
+                </div>
+
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-main);">✓ ${ev.event_type.replace(/_/g, ' ')}</h4>
+                        <span class="status-chip status-chip-docs" style="font-size: 0.72rem;">Source: ${ev.actor}</span>
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.65rem;">
+                        ${ev.description}
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); background: var(--bg-main); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-light); flex-wrap: wrap; gap: 0.5rem;">
+                        <div>Timestamp: <strong>${ev.timestamp}</strong></div>
+                        <div>Previous: <code class="font-mono" style="font-size: 0.72rem;">${prevShort}</code></div>
+                        <div>SHA-256 Hash: <code class="font-mono" style="font-size: 0.72rem; color: var(--primary-color);">${hashShort}</code></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+async function verifyChainIntegrity() {
+    const btn = document.getElementById('btnVerifyChain');
+    btn.disabled = true;
+    btn.textContent = 'Calculating Hashes...';
+
+    try {
+        const res = await fetch(`/api/audit/${currentAuditBatchId}/verify`, { method: 'POST' });
+        const ver = await res.json();
+        updateVerificationUI(ver);
+
+        if (ver.verified) {
+            alert(`Audit Chain Verified!\n\nAll ${ver.event_count} recorded lifecycle events for batch '${currentAuditBatchId}' match calculated SHA-256 hashes and previous_hash pointers.`);
+        } else {
+            alert(`ALERT: Audit Chain Integrity Check Failed!\n\nReason: ${ver.reason}`);
+        }
+    } catch (e) {
+        alert('Error performing cryptographic verification.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Verify Chain Integrity</span>`;
+    }
+}
+</script>
+{% endblock %}

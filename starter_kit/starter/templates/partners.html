@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Partner Facilities{% endblock %}
+{% block page_title %}Certified Downstream Partner Facilities{% endblock %}
+
+{% block header_actions %}
+<a href="/matches" class="btn btn-secondary btn-sm">Return to Active Matches</a>
+{% endblock %}
+
+{% block content %}
+<!-- Software Scope & Demo Partner Disclaimer Banner -->
+<div class="disclaimer-banner" style="background-color: #f0f7f2; border-color: #cce4d2; border-left-color: #2b5439; color: #1c3b27; margin-bottom: 1.5rem;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <div>
+        <strong>Software Scope Notice &amp; Illustrative Demo Partner Data:</strong>
+        <span style="font-size: 0.82rem; color: #3a5c46; display: block; margin-top: 0.2rem;">
+            Nirmūla performs digital compliance verification, geolocation, and soil deficiency matching. Physical chemical extraction, refining, and agricultural formulation are conducted by independent certified partner facilities. Partner profiles below represent illustrative demonstration facilities.
+        </span>
+    </div>
+</div>
+
+<!-- Contextual Match Assignment Banner (Visible when ?match_id=X is present) -->
+<div id="matchContextBanner" class="card" style="display:none; background-color: #f6fdf8; border-color: #c2ebcb; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="status-chip status-chip-accepted" style="margin-bottom: 0.35rem;">Partner Assignment Context</span>
+            <h3 class="card-title" id="matchContextTitle" style="color: #165225;">Assigning Partner for Match</h3>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="matchContextSubtitle">Loading match specifications...</div>
+        </div>
+        <a href="/matches" class="btn btn-secondary btn-sm">Cancel Assignment</a>
+    </div>
+</div>
+
+<!-- Filter & Controls Bar -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <div>
+            <h3 class="card-title">Downstream Recovery Partners</h3>
+            <span class="text-sm text-muted">Filter certified reprocessors by compound capability and processing capacity</span>
+        </div>
+        <div class="filter-bar" style="margin-bottom: 0;">
+            <input type="text" class="filter-input" id="partnerSearch" placeholder="Search Facility Name, City..." onkeyup="filterPartners()">
+            <select class="filter-input" id="partnerCompoundFilter" onchange="filterPartners()">
+                <option value="ALL">All Supported Compounds</option>
+                <option value="Zinc Sulphate">Zinc Sulphate</option>
+                <option value="Ferrous Sulphate">Ferrous Sulphate</option>
+                <option value="Potassium Chloride">Potassium Chloride</option>
+            </select>
+            <select class="filter-input" id="partnerStateFilter" onchange="filterPartners()">
+                <option value="ALL">All Locations</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Punjab">Punjab</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Partners Grid -->
+<div class="grid grid-3" id="partnersGrid" style="margin-bottom: 1.5rem;">
+    <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading partner facilities...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allPartners = [];
+let targetMatch = null;
+const urlParams = new URLSearchParams(window.location.search);
+const targetMatchId = urlParams.get('match_id');
+
+document.addEventListener('DOMContentLoaded', loadPartnersPage);
+
+async function loadPartnersPage() {
+    try {
+        if (targetMatchId) {
+            // Load match eligibility context
+            const res = await fetch(`/api/partners/eligible?match_id=${targetMatchId}`);
+            const data = await res.json();
+            
+            if (data.match) {
+                targetMatch = data.match;
+                document.getElementById('matchContextBanner').style.display = 'block';
+                document.getElementById('matchContextTitle').textContent = `Assign Partner for Match M-${String(targetMatch.match_id).padStart(4, '0')}`;
+                document.getElementById('matchContextSubtitle').textContent = `Batch: ${targetMatch.batch_id} | Compound: ${targetMatch.compound_name} | Quantity: ${targetMatch.batch_qty_kg} kg -> Target: ${targetMatch.target_state}`;
+            }
+
+            allPartners = data.eligible_partners;
+        } else {
+            const res = await fetch('/api/partners');
+            allPartners = await res.json();
+        }
+
+        renderPartnersGrid(allPartners);
+    } catch (e) {
+        console.error('Failed to load partner facilities:', e);
+    }
+}
+
+function renderPartnersGrid(partners) {
+    const grid = document.getElementById('partnersGrid');
+    grid.innerHTML = '';
+
+    if (partners.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No partner facilities match the selected criteria.</div>`;
+        return;
+    }
+
+    partners.forEach(p => {
+        const supportedBadges = p.supported_compounds.split(',').map(c => `<span class="status-chip status-chip-pending" style="font-size: 0.7rem; margin-right: 2px;">${c.strip ? c.strip() : c.trim()}</span>`).join('');
+        const pctAvail = Math.round((p.available_capacity_kg / p.capacity_kg) * 100);
+
+        let eligibilityBadgeHtml = '';
+        let assignBtnDisabled = false;
+
+        if (targetMatch) {
+            const isEligible = p.is_compound_supported && p.is_capacity_sufficient;
+            if (isEligible) {
+                eligibilityBadgeHtml = `<div style="margin-bottom: 0.75rem;"><span class="status-chip status-chip-accepted">✓ Eligible — Sufficient Capacity</span></div>`;
+            } else if (p.is_compound_supported && !p.is_capacity_sufficient) {
+                eligibilityBadgeHtml = `<div style="margin-bottom: 0.75rem;"><span class="status-chip status-chip-rejected">✕ Not Eligible — Insufficient Capacity</span></div>`;
+                assignBtnDisabled = true;
+            } else {
+                eligibilityBadgeHtml = `<div style="margin-bottom: 0.75rem;"><span class="status-chip status-chip-combo">✕ Unsupported Compound</span></div>`;
+                assignBtnDisabled = true;
+            }
+        }
+
+        grid.innerHTML += `
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    ${eligibilityBadgeHtml}
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); line-height: 1.3;">${p.name}</h4>
+                        <span class="status-chip status-chip-docs" style="font-size: 0.68rem;">Demo Facility</span>
+                    </div>
+
+                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--primary-color); margin-bottom: 0.75rem;">${p.partner_type}</div>
+
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                        <strong>Location:</strong> ${p.location}, ${p.state}
+                    </div>
+
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        <strong>Supported Compounds:</strong>
+                        <div style="margin-top: 0.35rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                            ${supportedBadges}
+                        </div>
+                    </div>
+
+                    <!-- Processing Capacity Bar -->
+                    <div style="margin-bottom: 0.85rem; background: var(--bg-main); padding: 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.35rem;">
+                            <span>Available Capacity:</span>
+                            <span style="color: ${pctAvail < 20 ? '#c53030' : 'var(--primary-color)'};">${p.available_capacity_kg.toLocaleString()} / ${p.capacity_kg.toLocaleString()} kg</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${pctAvail}%; height: 100%; background: ${pctAvail < 20 ? '#e53e3e' : 'var(--primary-color)'}; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.75rem;">
+                        License: ${p.certification_status}
+                    </div>
+
+                    ${targetMatch ? `
+                        <button class="btn btn-primary btn-sm" style="width: 100%;" ${assignBtnDisabled ? 'disabled' : ''} onclick="assignPartnerToMatch(${targetMatch.match_id}, ${p.partner_id}, '${p.name}')">
+                            ${assignBtnDisabled ? 'Capacity Insufficient' : 'Assign Partner to Match'}
+                        </button>
+                    ` : `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="status-chip status-chip-accepted">${p.capacity_status}</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted);">${p.contact}</span>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+}
+
+function filterPartners() {
+    const search = document.getElementById('partnerSearch').value.toLowerCase();
+    const compoundVal = document.getElementById('partnerCompoundFilter').value;
+    const stateVal = document.getElementById('partnerStateFilter').value;
+
+    const filtered = allPartners.filter(p => {
+        const matchSearch = p.name.toLowerCase().includes(search) || p.location.toLowerCase().includes(search);
+
+        let matchCompound = true;
+        if (compoundVal !== 'ALL') {
+            const supported = p.supported_compounds.split(',').map(c => c.trim());
+            matchCompound = supported.includes(compoundVal);
+        }
+
+        let matchState = true;
+        if (stateVal !== 'ALL') matchState = p.state === stateVal;
+
+        return matchSearch && matchCompound && matchState;
+    });
+
+    renderPartnersGrid(filtered);
+}
+
+async function assignPartnerToMatch(matchId, partnerId, partnerName) {
+    if (!confirm(`Confirm assigning '${partnerName}' to Match M-${String(matchId).padStart(4, '0')}?`)) return;
+
+    try {
+        const res = await fetch(`/api/matches/${matchId}/assign-partner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ partner_id: partnerId })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert(`Partner '${partnerName}' assigned successfully!`);
+            window.location.href = '/matches';
+        } else {
+            alert(`Assignment failed: ${data.error || 'Unknown error'}`);
+        }
+    } catch (e) {
+        alert('Network error assigning partner.');
+    }
+}
+</script>
+{% endblock %}
