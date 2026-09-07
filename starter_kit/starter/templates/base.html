@@ -23,68 +23,36 @@
             </div>
 
             <nav class="sidebar-nav">
-                <div class="nav-section-title">Core Operations</div>
+                <div class="nav-section-title">Platform Operations</div>
                 
                 <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                     <span>Dashboard</span>
                 </a>
 
-                <a href="/network" class="sidebar-link {% if request.path == '/network' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-                    <span>Recovery Network Map</span>
-                </a>
-
-                <a href="/impact" class="sidebar-link {% if request.path == '/impact' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    <span>Environmental Impact</span>
-                </a>
-
-                <a href="/simulator" class="sidebar-link {% if request.path == '/simulator' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                    <span>Recovery Simulator</span>
-                </a>
-
-                <a href="/batches" class="sidebar-link {% if request.path == '/batches' %}active{% endif %}">
+                <a href="/stock" class="sidebar-link {% if request.path == '/stock' or request.path == '/batches' or request.path == '/compliance' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                    <span>Stock Ledger</span>
+                    <span>Stock &amp; Compliance</span>
                 </a>
 
-                <a href="/compliance" class="sidebar-link {% if request.path == '/compliance' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                    <span>Compliance Queue</span>
+                <a href="/pipeline" class="sidebar-link {% if request.path == '/pipeline' or request.path == '/matches' or request.path.startswith('/process') %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span>Recovery Pipeline</span>
                 </a>
 
-                <a href="/soil-map" class="sidebar-link {% if request.path == '/soil-map' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <span>State Soil Reference</span>
+                <a href="/dosage" class="sidebar-link {% if request.path == '/dosage' or request.path == '/simulator' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+                    <span>Dosage Calculation</span>
                 </a>
 
-                <div class="nav-section-title" style="margin-top: 1rem;">Deployment &amp; Audit</div>
-
-                <a href="/matches" class="sidebar-link {% if request.path == '/matches' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
-                    <span>Active Matches</span>
+                <a href="/soil-map" class="sidebar-link {% if request.path == '/soil-map' or request.path == '/network' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                    <span>Recovery Map</span>
                 </a>
 
-                <a href="/partners" class="sidebar-link {% if request.path == '/partners' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span>Partner Facilities</span>
-                </a>
-
-                <a href="/retests" class="sidebar-link {% if request.path == '/retests' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Soil Re-test Feedback</span>
-                </a>
-
-                <a href="/audit" class="sidebar-link {% if request.path == '/audit' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    <span>Audit Trail &amp; Hashes</span>
-                </a>
-
-                <a href="/about" class="sidebar-link {% if request.path == '/about' %}active{% endif %}" style="margin-top: auto;">
+                <a href="/about" class="sidebar-link {% if request.path == '/about' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <span>Methodology / About</span>
+                    <span>About Nirmūla</span>
                 </a>
             </nav>
 

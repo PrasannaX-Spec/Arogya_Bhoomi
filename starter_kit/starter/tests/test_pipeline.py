@@ -13,17 +13,32 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 
 
 
+def get_test_client():
+    from app import app
+    return app.test_client()
+
+
 def api_post(path):
-    req = urllib.request.Request(f"{BASE_URL}{path}", method="POST",
-                                headers={"Content-Type": "application/json"},
-                                data=b"{}")
-    res = urllib.request.urlopen(req)
-    return json.loads(res.read())
+    try:
+        req = urllib.request.Request(f"{BASE_URL}{path}", method="POST",
+                                    headers={"Content-Type": "application/json"},
+                                    data=b"{}")
+        res = urllib.request.urlopen(req)
+        return json.loads(res.read())
+    except Exception:
+        client = get_test_client()
+        res = client.post(path)
+        return res.get_json()
 
 
 def api_get(path):
-    res = urllib.request.urlopen(f"{BASE_URL}{path}")
-    return json.loads(res.read())
+    try:
+        res = urllib.request.urlopen(f"{BASE_URL}{path}")
+        return json.loads(res.read())
+    except Exception:
+        client = get_test_client()
+        res = client.get(path)
+        return res.get_json()
 
 
 def insert_test_batch(batch_id, compound):

@@ -38,8 +38,14 @@ import sqlite3
 import json
 import os
 import hashlib
+import io
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
+
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 from modules.intake import check_compliance, run_all_pending, DB_PATH
 from modules.geolocation import resolve_location
@@ -1609,87 +1615,366 @@ def simulate_recovery():
 
 
 # ─────────────────────────────────────────────
+# Acknowledgement Report PDF Generation Helpers
+# ─────────────────────────────────────────────
+
+def get_report_data_for_batch(batch_id):
+    """
+    Retrieve report data for an individual successful recovery batch.
+    Returns None if batch does not exist, compliance failed, or no soil match exists.
+    """
+    conn = get_db_connection()
+    try:
+        batch = conn.execute(
+            "SELECT * FROM intake_batches WHERE batch_doc_id = ?",
+            (batch_id,)
+        ).fetchone()
+
+        if not batch:
+            return None
+
+        # Validate compliance eligibility
+        compliance_status = batch["compliance_status"]
+        if not compliance_status or compliance_status == "Pending" or compliance_status == "Rejected":
+            return None
+
+        # Validate soil match eligibility
+        match = conn.execute(
+            "SELECT * FROM matches WHERE batch_id = ?",
+            (batch_id,)
+        ).fetchone()
+
+        if not match:
+            return None
+
+        # Fetch audit events
+        events = conn.execute(
+            "SELECT * FROM audit_events WHERE batch_id = ? ORDER BY event_id ASC",
+            (batch_id,)
+        ).fetchall()
+
+        audit_chain_status = verify_audit_chain(batch_id)
+
+        report_data = {
+            "batch_doc_id": batch["batch_doc_id"],
+            "compound_name": batch["compound_name"],
+            "batch_qty_kg": batch["batch_qty_kg"],
+            "source_location": batch["source_location"],
+            "compliance_status": batch["compliance_status"],
+            "expiry_date": batch["expiry_date"],
+            "source_type": batch["source_type"] if "source_type" in batch.keys() else "Retail Pharmacy",
+            "intake_status": batch["intake_status"] if "intake_status" in batch.keys() else "Accepted",
+            "target_state": match["target_state"],
+            "target_district": match["target_district"],
+            "deficiency_type": match["deficiency_type"],
+            "severity": match["severity"],
+            "match_type": match["match_type"],
+            "recommended_dosage": match["recommended_dosage"],
+            "match_status": match["status"],
+            "assigned_partner_name": match["assigned_partner_name"] or "Unassigned",
+            "audit_events": [dict(e) for e in events],
+            "audit_chain_status": audit_chain_status
+        }
+        return report_data
+    finally:
+        conn.close()
+
+
+def generate_acknowledgement_pdf_bytes(data):
+    """
+    Generate in-memory PDF bytes for a single batch acknowledgement report using ReportLab.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#1b4332'),
+        fontName='Helvetica-Bold',
+        spaceAfter=4
+    )
+    subtitle_style = ParagraphStyle(
+        'DocSubtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#2d6a4f'),
+        fontName='Helvetica-Bold',
+        spaceAfter=10
+    )
+    section_heading = ParagraphStyle(
+        'SectionHeading',
+        parent=styles['Heading2'],
+        fontSize=11,
+        leading=15,
+        textColor=colors.HexColor('#1b4332'),
+        fontName='Helvetica-Bold',
+        spaceBefore=10,
+        spaceAfter=6
+    )
+    cell_style = ParagraphStyle(
+        'TableCell',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        fontName='Helvetica'
+    )
+    cell_bold = ParagraphStyle(
+        'TableCellBold',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        fontName='Helvetica-Bold'
+    )
+    footer_text = ParagraphStyle(
+        'FooterText',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=11,
+        textColor=colors.HexColor('#555555'),
+        alignment=1
+    )
+
+    story = []
+
+    story.append(Paragraph("Nirmūla Recovery Platform", title_style))
+    story.append(Paragraph("OFFICIAL ACKNOWLEDGEMENT REPORT — RECOVERY & DEPLOYMENT", subtitle_style))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#2d6a4f'), spaceBefore=2, spaceAfter=10))
+
+    gen_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    story.append(Paragraph(f"<b>Batch ID:</b> {data['batch_doc_id']} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Report Date:</b> {gen_time} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Status:</b> VERIFIED & RECOVERED", cell_style))
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("1. Pharmaceutical Batch & Compliance Summary", section_heading))
+    table_data_1 = [
+        [Paragraph("Batch ID", cell_bold), Paragraph(str(data['batch_doc_id']), cell_style),
+         Paragraph("Compound", cell_bold), Paragraph(str(data['compound_name']), cell_style)],
+        [Paragraph("Quantity (kg)", cell_bold), Paragraph(f"{data['batch_qty_kg']} kg", cell_style),
+         Paragraph("Compliance Status", cell_bold), Paragraph(f"<font color='#22c55e'><b>{data['compliance_status']}</b></font>", cell_style)],
+        [Paragraph("Source Location", cell_bold), Paragraph(str(data['source_location']), cell_style),
+         Paragraph("Source Type", cell_bold), Paragraph(str(data.get('source_type', 'N/A')), cell_style)],
+        [Paragraph("Expiry Date", cell_bold), Paragraph(str(data.get('expiry_date', 'N/A')), cell_style),
+         Paragraph("Intake Status", cell_bold), Paragraph(str(data.get('intake_status', 'N/A')), cell_style)]
+    ]
+    t1 = Table(table_data_1, colWidths=[110, 160, 110, 160])
+    t1.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fdf9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#d8e6dc')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2ece9')),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t1)
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("2. Soil Deficiency Match & Application Guidance", section_heading))
+    table_data_2 = [
+        [Paragraph("Target State", cell_bold), Paragraph(str(data.get('target_state', 'N/A')), cell_style),
+         Paragraph("Target District", cell_bold), Paragraph(str(data.get('target_district', 'N/A')), cell_style)],
+        [Paragraph("Deficiency Type", cell_bold), Paragraph(str(data.get('deficiency_type', 'N/A')), cell_style),
+         Paragraph("Deficiency Severity", cell_bold), Paragraph(str(data.get('severity', 'Medium')), cell_style)],
+        [Paragraph("Matching Logic", cell_bold), Paragraph(str(data.get('match_type', 'N/A')), cell_style),
+         Paragraph("Match Status", cell_bold), Paragraph(str(data.get('match_status', 'Matched')), cell_style)],
+        [Paragraph("Recommended Dosage", cell_bold), Paragraph(str(data.get('recommended_dosage', 'N/A')), cell_style),
+         Paragraph("Assigned Partner", cell_bold), Paragraph(str(data.get('assigned_partner_name', 'Unassigned')), cell_style)]
+    ]
+    t2 = Table(table_data_2, colWidths=[110, 160, 110, 160])
+    t2.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fdf9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#d8e6dc')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2ece9')),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t2)
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("3. Tamper-Evident Audit Ledger Verification", section_heading))
+    chain_msg = data.get('audit_chain_status', {}).get('verification_message', 'Chain Verified')
+    story.append(Paragraph(f"<b>SHA-256 Chain Verification:</b> <font color='#22c55e'>{chain_msg}</font>", cell_style))
+    story.append(Spacer(1, 6))
+
+    header_cell_style = ParagraphStyle(
+        'HeaderCell',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        fontName='Helvetica-Bold',
+        textColor=colors.white
+    )
+
+    audit_rows = [[
+        Paragraph("ID", header_cell_style),
+        Paragraph("Timestamp", header_cell_style),
+        Paragraph("Event Type", header_cell_style),
+        Paragraph("Actor", header_cell_style),
+        Paragraph("Description", header_cell_style)
+    ]]
+    for ev in data.get('audit_events', []):
+        audit_rows.append([
+            Paragraph(str(ev.get('event_id', '')), cell_style),
+            Paragraph(str(ev.get('timestamp', '')), cell_style),
+            Paragraph(str(ev.get('event_type', '')), cell_style),
+            Paragraph(str(ev.get('actor', '')), cell_style),
+            Paragraph(str(ev.get('description', '')), cell_style)
+        ])
+
+    if len(audit_rows) > 1:
+        t3 = Table(audit_rows, colWidths=[30, 100, 110, 100, 200])
+        t3.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2d6a4f')),
+            ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#d8e6dc')),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2ece9')),
+            ('PADDING', (0,0), (-1,-1), 4),
+        ]))
+        story.append(t3)
+
+    story.append(Spacer(1, 14))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#cccccc'), spaceBefore=4, spaceAfter=8))
+    story.append(Paragraph("This official acknowledgement document is generated by the Nirmūla Recovery Platform. It certifies that the above batch has completed single-compound compliance, geolocation resolution, state soil-deficiency matching, and dosage calculation in accordance with CPCB & ICAR guidelines.", footer_text))
+
+    doc.build(story)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
+
+
+@app.route("/api/reports/pdf/<batch_id>", methods=["GET"])
+def download_acknowledgement_pdf(batch_id):
+    """
+    Download acknowledgement PDF for a specific successful recovery batch.
+    Validates batch eligibility before generating PDF.
+    """
+    report_data = get_report_data_for_batch(batch_id)
+    if not report_data:
+        return jsonify({
+            "error": f"Acknowledgement PDF is only available for valid, successfully matched recovery batches. Batch '{batch_id}' is ineligible or not found."
+        }), 400
+
+    try:
+        pdf_bytes = generate_acknowledgement_pdf_bytes(report_data)
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"acknowledgement_{batch_id}.pdf"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Error generating acknowledgement PDF: {str(e)}"}), 500
+
+
+# ─────────────────────────────────────────────
 # Web UI Routes
 # ─────────────────────────────────────────────
 
 @app.route("/")
 def index():
-    """Dashboard / landing page."""
+    """01. Dashboard page."""
     return render_template("index.html")
 
 
-@app.route("/impact")
-def impact_page():
-    """Environmental Impact Calculator page."""
-    return render_template("impact.html")
+@app.route("/stock")
+def stock_page():
+    """02. Stock & Compliance page."""
+    return render_template("stock.html")
 
 
-@app.route("/network")
-def network_page():
-    """Interactive Recovery Network Map page."""
-    return render_template("network.html")
+@app.route("/pipeline")
+def pipeline_page():
+    """03. Recovery Pipeline / Soil Matching page."""
+    return render_template("pipeline.html")
 
 
-@app.route("/simulator")
-def simulator_page():
-    """What-If Soil Recovery Simulator page."""
-    return render_template("simulator.html")
-
-
-@app.route("/batches")
-def batches_page():
-    """Stock Ledger page."""
-    return render_template("batches.html")
-
-
-@app.route("/compliance")
-def compliance_page():
-    """Compliance Queue page."""
-    return render_template("compliance.html")
-
-
-@app.route("/matches")
-def matches_page():
-    """Active Matches page (Phase 3)."""
-    return render_template("matches.html")
-
-
-@app.route("/partners")
-def partners_page():
-    """Partner Facilities page (Phase 4)."""
-    return render_template("partners.html")
-
-
-@app.route("/audit")
-def audit_page():
-    """Audit Trail page (Phase 5)."""
-    return render_template("audit.html")
-
-
-@app.route("/retests")
-def retests_page():
-    """Soil Re-tests & Audit page (Phase 5)."""
-    return render_template("retests.html")
-
-
-@app.route("/process/<batch_doc_id>")
-def process_page(batch_doc_id):
-    """Pipeline processing result view."""
-    return render_template("process.html", batch_doc_id=batch_doc_id)
+@app.route("/dosage")
+def dosage_page():
+    """04. Dosage Calculator page."""
+    return render_template("dosage.html")
 
 
 @app.route("/soil-map")
 def soil_map_page():
-    """Soil deficiency data view."""
+    """06. Recovery Map page."""
     return render_template("soil_map.html")
 
 
 @app.route("/about")
 def about_page():
-    """About / methodology page."""
+    """07. About page."""
     return render_template("about.html")
+
+
+# Route Aliases & Redirect Compatibility Layer
+@app.route("/batches")
+def batches_page():
+    """Stock Ledger alias -> stock.html"""
+    return render_template("stock.html")
+
+
+@app.route("/compliance")
+def compliance_page():
+    """Compliance Queue alias -> stock.html"""
+    return render_template("stock.html")
+
+
+@app.route("/matches")
+def matches_page():
+    """Active Matches alias -> pipeline.html"""
+    return render_template("pipeline.html")
+
+
+@app.route("/process/<batch_doc_id>")
+def process_page(batch_doc_id):
+    """Pipeline process view alias -> pipeline.html"""
+    return render_template("pipeline.html", batch_doc_id=batch_doc_id)
+
+
+@app.route("/simulator")
+def simulator_page():
+    """Simulator alias -> dosage.html"""
+    return render_template("dosage.html")
+
+
+@app.route("/network")
+def network_page():
+    """Network map alias -> soil_map.html"""
+    return render_template("soil_map.html")
+
+
+@app.route("/impact")
+def impact_page():
+    """Impact alias -> index.html"""
+    return render_template("index.html")
+
+
+@app.route("/partners")
+def partners_page():
+    """Partners page."""
+    return render_template("partners.html")
+
+
+@app.route("/audit")
+def audit_page():
+    """Audit page."""
+    return render_template("audit.html")
+
+
+@app.route("/retests")
+def retests_page():
+    """Retests page."""
+    return render_template("retests.html")
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+
 

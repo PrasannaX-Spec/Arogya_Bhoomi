@@ -987,13 +987,422 @@ h1, h2, h3, h4 {
   text-transform: uppercase;
 }
 
-/* Subtle Hover Elevations */
-.card-hover-effect {
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+/* ==========================================================================
+   Master Restructure — Agri-Tech Component Styles
+   ========================================================================== */
+
+.grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
 }
 
-.card-hover-effect:hover {
+@media (max-width: 1100px) {
+  .grid-5 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+  .grid-5 { grid-template-columns: 1fr; }
+}
+
+.dashboard-hero-banner {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+  color: #ffffff;
+  padding: 2rem 2.25rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
+}
+
+.sih-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  color: #e8f5e9;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 50px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.hero-headline {
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.65rem;
+  color: #ffffff !important;
+}
+
+.hero-subtext {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #d8f3dc;
+  max-width: 900px;
+}
+
+/* 7-Step Workflow Stepper */
+.workflow-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.step-item {
+  flex: 1;
+  min-width: 100px;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.step-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2d6a4f;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.5rem auto;
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.2);
+}
+
+.step-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1b4332;
+  letter-spacing: 0.5px;
+
+}
+
+.step-desc {
+  font-size: 0.72rem;
+  color: #555;
+  margin-top: 2px;
+}
+
+.step-arrow {
+  color: #74c69d;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+@media (max-width: 850px) {
+  .step-arrow { display: none; }
+  .workflow-stepper { display: grid; grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Quick Action Cards */
+.quick-action-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quick-action-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
+
+.action-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #e8f5e9;
+  color: #1b4332;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.quick-action-card h3 {
+  font-size: 1.1rem;
+  color: #1b4332;
+  margin-bottom: 0.5rem;
+}
+
+.quick-action-card p {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.45;
+  margin-bottom: 1.25rem;
+  flex-grow: 1;
+}
+
+.dashboard-footer-banner {
+  background: #1b4332;
+  color: #ffffff;
+  padding: 1.25rem 2rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.banner-icon {
+  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-text {
+  font-size: 1rem;
+  font-weight: 600;
+  font-style: italic;
+  color: #e8f5e9;
+}
+
+/* Compliance Result Box */
+.compliance-result-box {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-top: 1rem;
+}
+
+.result-success {
+  background: #e8f5e9;
+  border: 1px solid #a3cfbb;
+}
+
+.result-danger {
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+}
+
+.result-badges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.result-badge-item {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1b4332;
+}
+
+/* Batch Preview Box */
+.batch-preview-box {
+  background: #f4f8f5;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #c8e0ca;
+}
+
+.preview-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: #555;
+  display: block;
+  font-weight: 600;
+}
+
+.preview-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1b4332;
+}
+
+/* Pipeline Progress Bar */
+.pipeline-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.75rem 0;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  background: #f0f0f0;
+  border-radius: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.pstep-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #777;
+}
+
+.pstep-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #555;
+  margin-top: 2px;
+}
+
+.step-active {
+  background: #bbf7d0;
+  border: 1px solid #22c55e;
+}
+
+.step-active .pstep-num, .step-active .pstep-text {
+  color: #14532d;
+}
+
+.step-complete {
+  background: #dcfce7;
+}
+
+.step-complete .pstep-num, .step-complete .pstep-text {
+  color: #15803d;
+}
+
+/* Match Flow Banner */
+.match-flow-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.flow-box {
+  background: #f8f7f4;
+  padding: 0.85rem 1.15rem;
+  border-radius: 6px;
+  border-left: 4px solid #777;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-highlight {
+  background: #fff8e6;
+  border-left-color: #d97706;
+}
+
+.flow-success {
+  background: #e8f5e9;
+  border-left-color: #2d6a4f;
+}
+
+.flow-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #555;
+  letter-spacing: 0.5px;
+}
+
+.flow-arrow {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2d6a4f;
+  margin: -0.25rem 0;
+}
+
+/* Detail Table */
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.detail-table th, .detail-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-table th {
+  text-align: left;
+  color: #555;
+  font-weight: 600;
+  width: 45%;
+}
+
+.detail-table td {
+  color: #1c271f;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #777;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.highlight-demo-row {
+  background-color: #f4f8f5 !important;
+}
+
+.state-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.state-usable {
+  border-left: 4px solid #2d6a4f;
+}
+
+.state-not-usable {
+  border-left: 4px solid #d1d5db;
+  opacity: 0.75;
+}
+
 

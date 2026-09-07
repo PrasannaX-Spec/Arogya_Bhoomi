@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Dosage Calculation{% endblock %}
+{% block page_title %}Educational Dosage Calculator{% endblock %}
+
+{% block header_actions %}
+<a href="/pipeline" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem;">Go to Recovery Pipeline</a>
+{% endblock %}
+
+{% block content %}
+<!-- Subtitle Banner -->
+<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(to right, #f4f8f5, #ffffff); border-left: 4px solid #2d6a4f;">
+    <h3 style="margin: 0; color: #1b4332;">Dosage Calculation</h3>
+    <p style="margin: 0.25rem 0 0 0; color: #555; font-size: 0.9rem;">
+        Demonstration of the rule-based dosage adjustment used by Nirmūla.
+    </p>
+</div>
+
+<!-- Notice Banner -->
+<div class="alert alert-info" style="margin-bottom: 1.5rem;">
+    <strong>Educational &amp; Interactive Demonstration Tool:</strong> This standalone calculator demonstrates the platform's agronomic rule-based dosage formula. It does not modify stock ledger records, trigger compliance checks, or log database state changes.
+</div>
+
+<div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Inputs & Calculation Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Dosage Calculation Inputs</h3>
+        </div>
+
+        <form id="dosageCalcForm" onchange="calculateDosageDemo()" oninput="calculateDosageDemo()">
+            <div class="form-group">
+                <label class="form-label" for="calcCompound">Select Compound</label>
+                <select id="calcCompound" class="form-select">
+                    <option value="Zinc Sulphate">Zinc Sulphate (Soil Application)</option>
+                    <option value="Potassium Chloride">Potassium Chloride (Soil Application)</option>
+                    <option value="Ferrous Sulphate">Ferrous Sulphate (Foliar Spray Guidance)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="calcQty">Available Compound Quantity (kg)</label>
+                <input type="number" id="calcQty" class="form-input" value="100.0" min="1" step="1" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="calcSeverity">Soil Deficiency Severity Tier</label>
+                <select id="calcSeverity" class="form-select">
+                    <option value="Medium" selected>Medium / Moderate Deficiency (1.00x Multiplier)</option>
+                    <option value="Low">Low Deficiency (1.25x Multiplier)</option>
+                    <option value="High">High Deficiency (0.75x Multiplier)</option>
+                </select>
+            </div>
+        </form>
+
+        <!-- Dynamic Output Box -->
+        <div id="soilOutputBox" class="dosage-output-card" style="margin-top: 1rem;">
+            <h4 style="margin-top: 0; color: #1b4332;">Calculated Application Guidance</h4>
+            
+            <div class="grid grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                <div class="stat-box">
+                    <div class="stat-label">Base Rate</div>
+                    <div class="stat-val" id="outBaseRate">37.5 kg/ha</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Severity Multiplier</div>
+                    <div class="stat-val" id="outMultiplier">1.00x</div>
+                </div>
+            </div>
+
+            <div class="highlight-result-box" style="background: #e8f5e9; padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #2d6a4f;">
+                <div style="font-size: 0.85rem; color: #2d6a4f; font-weight: 600;">FINAL RECOMMENDED DOSAGE</div>
+                <div id="outFinalDosage" style="font-size: 1.75rem; font-weight: 700; color: #1b4332; margin: 0.25rem 0;">37.5 kg/ha</div>
+                <div id="outFormulaBreakdown" style="font-size: 0.85rem; color: #555;">37.5 kg/ha &times; 1.00 = 37.5 kg/ha</div>
+            </div>
+
+            <div style="margin-top: 1rem; padding: 0.75rem; background: #f4f6f8; border-radius: 6px; font-size: 0.85rem;">
+                <strong>Estimated Farmland Coverage:</strong>
+                <span id="outHectareArea" style="font-weight: 600; color: #1b4332;">2.7 hectares</span>
+                <span style="color: #666; font-size: 0.8rem; display: block; margin-top: 2px;">(Formula: 100.0 kg available &divide; 37.5 kg/ha recommended dose)</span>
+            </div>
+        </div>
+
+        <!-- Ferrous Sulphate Foliar Special Branch Box -->
+        <div id="foliarOutputBox" class="dosage-output-card" style="margin-top: 1rem; display: none; background: #fef8ec; border: 1px solid #f59e0b;">
+            <h4 style="margin-top: 0; color: #b45309;">Ferrous Sulphate Foliar Guidance Special Branch</h4>
+            <p style="font-size: 0.9rem; color: #78350f; margin-bottom: 0.75rem;">
+                Ferrous Sulphate follows the platform's foliar application guidance rather than the soil-dose multiplier calculation.
+            </p>
+            
+            <div style="background: #ffffff; padding: 1rem; border-radius: 6px; border: 1px solid #fde68a;">
+                <div style="font-weight: 600; color: #92400e; margin-bottom: 0.5rem;">FOLIAR APPLICATION GUIDANCE:</div>
+                <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: #451a03;">
+                    <li><strong>Solution Strength:</strong> 0.5% – 1.0% aqueous Ferrous Sulphate solution</li>
+                    <li><strong>Application Mode:</strong> Foliar spray to prevent soil iron fixation</li>
+                    <li><strong>Frequency:</strong> 2 to 3 sprays at 10–15 day intervals during early growth stage</li>
+                    <li><strong>Agronomic Precedent:</strong> Standard ICAR &amp; State University foliar spray recommendations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Methodology & Reference Card (Right Column) -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Nirmūla Dosage Adjustment Methodology</h3>
+        </div>
+
+        <div style="font-size: 0.9rem; color: #333; line-height: 1.5;">
+            <p>
+                Nirmūla applies a rule-based formula to adjust base recommended application rates based on documented soil deficiency severity.
+            </p>
+
+            <div style="background: #f4f6f8; padding: 1rem; border-radius: 6px; border-left: 4px solid #2d6a4f; margin: 1rem 0;">
+                <div style="font-weight: 700; color: #1b4332; margin-bottom: 0.25rem;">FORMULA:</div>
+                <div style="font-family: monospace; font-size: 0.95rem; color: #1b4332;">
+                    Recommended Dosage (kg/ha) = Base Rate (kg/ha) &times; Severity Multiplier
+                </div>
+            </div>
+
+            <h4 style="color: #1b4332; margin-top: 1.25rem; margin-bottom: 0.5rem;">Current Rule-Based Multipliers</h4>
+            <table class="data-table" style="font-size: 0.85rem; margin-bottom: 1rem;">
+                <thead>
+                    <tr>
+                        <th>Deficiency Severity</th>
+                        <th>Multiplier</th>
+                        <th>Adjustment Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Low Deficiency</strong></td>
+                        <td><span class="badge badge-warning">1.25x</span></td>
+                        <td>Higher dose required to build up depleted soil reserves.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medium / Moderate</strong></td>
+                        <td><span class="badge badge-info">1.00x</span></td>
+                        <td>Standard baseline agronomic application rate.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>High Deficiency / Mild</strong></td>
+                        <td><span class="badge badge-success">0.75x</span></td>
+                        <td>Lower maintenance dose for mildly deficient soils.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4 style="color: #1b4332; margin-top: 1.25rem; margin-bottom: 0.5rem;">Base Reference Rates</h4>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: #444;">
+                <li><strong>Zinc Sulphate (ZnSO₄):</strong> Base Rate = 37.5 kg/ha</li>
+                <li><strong>Potassium Chloride (KCl):</strong> Base Rate = 40.0 kg/ha</li>
+                <li><strong>Ferrous Sulphate (FeSO₄):</strong> Foliar Application Spec (Foliar Branch)</li>
+            </ul>
+
+            <div style="margin-top: 1.25rem; font-size: 0.75rem; color: #777; border-top: 1px solid #eee; padding-top: 0.75rem;">
+                <strong>Note:</strong> Labeled clearly as the <em>Nirmūla Rule-Based Dosage Adjustment Model</em>. This model provides illustrative application guidance based on reference data.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    calculateDosageDemo();
+});
+
+function calculateDosageDemo() {
+    const compound = document.getElementById('calcCompound').value;
+    const qty = parseFloat(document.getElementById('calcQty').value) || 100.0;
+    const severity = document.getElementById('calcSeverity').value;
+
+    const soilBox = document.getElementById('soilOutputBox');
+    const foliarBox = document.getElementById('foliarOutputBox');
+
+    if (compound === 'Ferrous Sulphate') {
+        soilBox.style.display = 'none';
+        foliarBox.style.display = 'block';
+        return;
+    }
+
+    soilBox.style.display = 'block';
+    foliarBox.style.display = 'none';
+
+    let baseRate = 37.5;
+    if (compound === 'Potassium Chloride') {
+        baseRate = 40.0;
+    }
+
+    let multiplier = 1.00;
+    if (severity === 'Low') {
+        multiplier = 1.25;
+    } else if (severity === 'High') {
+        multiplier = 0.75;
+    }
+
+    const finalDosage = (baseRate * multiplier).toFixed(1);
+    const addressableArea = (qty / finalDosage).toFixed(1);
+
+    document.getElementById('outBaseRate').textContent = `${baseRate} kg/ha`;
+    document.getElementById('outMultiplier').textContent = `${multiplier.toFixed(2)}x`;
+    document.getElementById('outFinalDosage').textContent = `${finalDosage} kg/ha`;
+    document.getElementById('outFormulaBreakdown').textContent = `${baseRate} kg/ha × ${multiplier.toFixed(2)} = ${finalDosage} kg/ha`;
+    document.getElementById('outHectareArea').textContent = `${addressableArea} hectares`;
+}
+</script>
+{% endblock %}

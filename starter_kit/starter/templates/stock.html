@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Stock &amp; Compliance{% endblock %}
+{% block page_title %}Stock Ledger &amp; Compliance Verification{% endblock %}
+
+{% block content %}
+<!-- Page Subtitle Banner -->
+<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(to right, #f4f8f5, #ffffff); border-left: 4px solid #2d6a4f;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 style="margin: 0; color: #1b4332;">Stock &amp; Compliance Center</h3>
+            <p style="margin: 0.25rem 0 0 0; color: #555; font-size: 0.9rem;">
+                Select an existing dataset batch or log a new expired batch to perform automated whitelist &amp; regulatory compliance checks.
+            </p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="selectDemoBatch('BATCH-ZI2026-1014')">
+                ⚡ Select Demo Batch (BATCH-ZI2026-1014)
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-3" style="margin-bottom: 1.5rem;">
+    <!-- Add New Batch Form Card (Left Column) -->
+    <div class="card" style="grid-column: span 1;">
+        <div class="card-header">
+            <h3 class="card-title">Add New Intake Batch</h3>
+        </div>
+
+        <form id="addBatchForm" onsubmit="handleBatchSubmit(event)">
+            <div class="form-group">
+                <label class="form-label" for="batchIdInput">Batch ID</label>
+                <input type="text" id="batchIdInput" class="form-input" placeholder="e.g. BATCH-ZI2026-9999" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="compoundSelect">Approved Compound</label>
+                <select id="compoundSelect" class="form-select" required>
+                    <option value="">-- Select Approved Compound --</option>
+                    <option value="Ferrous Sulphate">Ferrous Sulphate</option>
+                    <option value="Zinc Sulphate">Zinc Sulphate</option>
+                    <option value="Potassium Chloride">Potassium Chloride</option>
+                </select>
+                <span class="text-sm text-muted" style="display: block; margin-top: 4px;">
+                    Only single-ingredient approved compounds are permitted.
+                </span>
+            </div>
+
+            <div class="grid grid-2" style="gap: 0.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="qtyInput">Quantity</label>
+                    <input type="number" step="0.1" id="qtyInput" class="form-input" placeholder="100.0" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="unitInput">Unit</label>
+                    <input type="text" id="unitInput" class="form-input" value="kg" readonly />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="sourceTypeSelect">Source Type</label>
+                <select id="sourceTypeSelect" class="form-select">
+                    <option value="Wholesale Distributor">Wholesale Distributor</option>
+                    <option value="Pharma Manufacturer">Pharma Manufacturer</option>
+                    <option value="Hospital Pharmacy">Hospital Pharmacy</option>
+                    <option value="Retail Pharmacy">Retail Pharmacy</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="locationInput">Source Location</label>
+                <input type="text" id="locationInput" class="form-input" placeholder="City, State (e.g. Bhubaneswar, Odisha)" required />
+            </div>
+
+            <div class="grid grid-2" style="gap: 0.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="mfgDateInput">Mfg Date</label>
+                    <input type="date" id="mfgDateInput" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="expDateInput">Expiry Date</label>
+                    <input type="date" id="expDateInput" class="form-input" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="gradeInput">Purity / Concentration Grade</label>
+                <input type="text" id="gradeInput" class="form-input" placeholder="e.g. 21% Zn Grade" value="Standard Grade" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Submit Batch for Verification</button>
+        </form>
+
+        <!-- Compliance Result Card -->
+        <div id="complianceResultCard" class="compliance-result-box" style="display: none; margin-top: 1rem;">
+            <h4 id="resultTitle" style="margin-top: 0;">Compliance Result</h4>
+            <div id="resultBadges" class="result-badges-list"></div>
+            <div id="resultMessage" style="font-size: 0.85rem; margin-top: 0.5rem; color: #444;"></div>
+            <div style="margin-top: 0.75rem;">
+                <a id="proceedToPipelineBtn" href="#" class="btn btn-primary btn-sm btn-block">
+                    Proceed to Pipeline &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Ledger Table (Right 2 Columns) -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header" style="flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+                <h3 class="card-title">Intake Stock Ledger</h3>
+                <span class="text-sm text-muted">Filter and select stock records to trigger recovery pipeline</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary btn-sm" onclick="runAllPendingCompliance()">Run Compliance Check</button>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="text" id="stockSearch" class="form-input" placeholder="Search batch or city..." onkeyup="filterStockTable()" style="flex: 1; min-width: 150px;" />
+            <select id="compoundFilter" class="form-select" onchange="filterStockTable()" style="width: auto;">
+                <option value="">All Compounds</option>
+                <option value="Zinc Sulphate">Zinc Sulphate</option>
+                <option value="Ferrous Sulphate">Ferrous Sulphate</option>
+                <option value="Potassium Chloride">Potassium Chloride</option>
+            </select>
+            <select id="statusFilter" class="form-select" onchange="filterStockTable()" style="width: auto;">
+                <option value="">All Statuses</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Pending">Pending Review</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+
+        <!-- Stock Table -->
+        <div class="table-responsive">
+            <table class="data-table" id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Batch ID</th>
+                        <th>Compound</th>
+                        <th>Qty (kg)</th>
+                        <th>Source Location</th>
+                        <th>Expiry Date</th>
+                        <th>Compliance Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr><td colspan="7" style="text-align: center; padding: 1.5rem;">Loading intake stock records...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allBatches = [];
+
+document.addEventListener("DOMContentLoaded", function() {
+    loadBatches();
+    
+    // Set default dates for form
+    const today = new Date();
+    const pastYear = new Date();
+    pastYear.setFullYear(today.getFullYear() - 2);
+    
+    document.getElementById('mfgDateInput').value = pastYear.toISOString().split('T')[0];
+    document.getElementById('expDateInput').value = today.toISOString().split('T')[0];
+});
+
+function loadBatches() {
+    fetch('/api/batches')
+        .then(res => res.json())
+        .then(data => {
+            allBatches = data.batches || data || [];
+            renderStockTable(allBatches);
+        })
+        .catch(err => console.error("Error loading batches:", err));
+}
+
+function renderStockTable(batches) {
+    const tbody = document.getElementById('stockTableBody');
+    if (!batches || batches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 1.5rem;">No batch records found.</td></tr>';
+        return;
+    }
+
+    let html = '';
+    batches.forEach(b => {
+        const batchId = b.batch_doc_id || b.batch_id;
+        const comp = b.compound_name;
+        const qty = b.batch_qty_kg;
+        const loc = b.source_location || 'N/A';
+        const exp = b.expiry_date || 'N/A';
+        const status = b.compliance_status || b.intake_status || 'Pending Review';
+        
+        let statusBadge = '<span class="badge badge-pending">Pending</span>';
+        if (status.includes('Accepted')) {
+            statusBadge = '<span class="badge badge-success">✓ Accepted</span>';
+        } else if (status.includes('Rejected')) {
+            statusBadge = '<span class="badge badge-danger">✗ Rejected</span>';
+        }
+
+        const isDemo = (batchId === 'BATCH-ZI2026-1014');
+        const rowClass = isDemo ? 'highlight-demo-row' : '';
+
+        html += `
+            <tr class="${rowClass}">
+                <td><strong>${batchId}</strong> ${isDemo ? '<span class="badge badge-info" style="font-size:0.65rem;">DEMO BATCH</span>' : ''}</td>
+                <td>${comp}</td>
+                <td>${qty} kg</td>
+                <td>${loc}</td>
+                <td>${exp}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <a href="/pipeline?batch=${batchId}" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding: 0.25rem 0.5rem;">
+                        Run Pipeline &rarr;
+                    </a>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function filterStockTable() {
+    const search = document.getElementById('stockSearch').value.toLowerCase();
+    const compFilter = document.getElementById('compoundFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const filtered = allBatches.filter(b => {
+        const batchId = (b.batch_doc_id || b.batch_id || '').toLowerCase();
+        const comp = (b.compound_name || '').toLowerCase();
+        const loc = (b.source_location || '').toLowerCase();
+        const status = (b.compliance_status || b.intake_status || '');
+
+        const matchesSearch = !search || batchId.includes(search) || comp.includes(search) || loc.includes(search);
+        const matchesComp = !compFilter || b.compound_name === compFilter;
+        const matchesStatus = !statusFilter || status.includes(statusFilter);
+
+        return matchesSearch && matchesComp && matchesStatus;
+    });
+
+    renderStockTable(filtered);
+}
+
+function selectDemoBatch(batchId) {
+    window.location.href = '/pipeline?batch=' + batchId;
+}
+
+function handleBatchSubmit(e) {
+    e.preventDefault();
+    
+    const payload = {
+        batch_doc_id: document.getElementById('batchIdInput').value.trim(),
+        compound_name: document.getElementById('compoundSelect').value,
+        batch_qty_kg: parseFloat(document.getElementById('qtyInput').value),
+        source_type: document.getElementById('sourceTypeSelect').value,
+        source_location: document.getElementById('locationInput').value.trim(),
+        manufacture_date: document.getElementById('mfgDateInput').value,
+        expiry_date: document.getElementById('expDateInput').value,
+        zn_concentration_grade: document.getElementById('gradeInput').value.trim()
+    };
+
+    fetch('/api/batches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        const card = document.getElementById('complianceResultCard');
+        const title = document.getElementById('resultTitle');
+        const badges = document.getElementById('resultBadges');
+        const msg = document.getElementById('resultMessage');
+        const btn = document.getElementById('proceedToPipelineBtn');
+
+        card.style.display = 'block';
+        if (data.status === 'Accepted' || data.success) {
+            card.className = 'compliance-result-box result-success';
+            title.textContent = '✓ Compliance Verified';
+            badges.innerHTML = `
+                <div class="result-badge-item">✓ Approved Compound (${payload.compound_name})</div>
+                <div class="result-badge-item">✓ Expiry Verified (${payload.expiry_date})</div>
+                <div class="result-badge-item">✓ Quantity Recorded (${payload.batch_qty_kg} kg)</div>
+                <div class="result-badge-item">✓ Source Location Resolved (${payload.source_location})</div>
+            `;
+            msg.textContent = 'Batch successfully cleared whitelist check and logged into stock ledger.';
+            btn.style.display = 'block';
+            btn.href = '/pipeline?batch=' + payload.batch_doc_id;
+        } else {
+            card.className = 'compliance-result-box result-danger';
+            title.textContent = '✗ Compliance Rejected';
+            badges.innerHTML = `<div class="result-badge-item">✗ Whitelist Violation / Invalid Expiry</div>`;
+            msg.textContent = data.reason || 'Compound is not on the whitelisted approved micronutrient list.';
+            btn.style.display = 'none';
+        }
+
+        loadBatches();
+    })
+    .catch(err => {
+        alert('Error submitting batch: ' + err);
+    });
+}
+
+function runAllPendingCompliance() {
+    fetch('/api/run_compliance', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            alert(`Compliance Check Complete!\nProcessed: ${data.total_processed || 0}\nAccepted: ${data.accepted || 0}\nRejected: ${data.rejected || 0}`);
+            loadBatches();
+        })
+        .catch(err => console.error("Error running compliance:", err));
+}
+</script>
+{% endblock %}
