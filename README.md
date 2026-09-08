@@ -22,6 +22,21 @@ India faces a dual agricultural and pharmaceutical management challenge:
 
 ---
 
+## 📊 Current Platform Data Snapshot
+
+| Metric | Count |
+|---|---|
+| Intake Stock Batches | **53** |
+| Mapped State/UT Soil Profiles | **29** |
+| Active Recovery Matches | **51** |
+| Certified Processing Partners | **6** |
+| Audit Trail Events | **561** |
+| Soil Re-Test Records | **46** |
+| Approved Whitelisted Compounds | **3** |
+| Automated Test Suite | **88 passed, 0 failed** |
+
+---
+
 ## 🧪 Core Approved Compounds
 
 Arogya Bhoomi exclusively processes three high-purity single-compound micronutrient salts:
@@ -67,9 +82,9 @@ Recovery Map / Monitoring
 ## 🛠️ Key Platform Features & Core Capabilities
 
 ### 1. Stock & Compliance (`/stock`)
-- Manages pharmaceutical inventory intake ledgers.
+- Manages pharmaceutical inventory intake ledgers across **53 tracked intake batches**.
 - Validates single-compound whitelist compliance and rejects multi-API combination drugs.
-- Tracks manufacturing dates, expiry dates, batch quantities, and source locations across 45 demo intake records.
+- Tracks manufacturing dates, expiry dates, batch quantities, and source locations.
 
 ### 2. Recovery Pipeline (`/pipeline`)
 - Automates the 4-stage recovery flow:
@@ -89,20 +104,33 @@ Recovery Map / Monitoring
   - Specific Agronomic Guidance: **"3–4 sprays of 1.0% ferrous sulphate (FeSO4, 20% Fe) at weekly intervals."**
 
 ### 4. Interactive Recovery Map (`/soil-map`)
-- Visualizes **29 soil-deficiency areas** across Indian states using Leaflet.js.
-- **Element-Color Coded Markers**:
-  - 🟢 **Zinc (Zn)**: Green (`#22c55e`)
-  - 🔵 **Iron (Fe)**: Blue (`#2563eb`)
-  - 🟠 **Potassium (K)**: Orange (`#f97316`)
-  - ⚪ **Non-Usable Region**: Gray (`#6b7280`)
-- Interactive click popups displaying State Name, Key Deficient Nutrients, Usable Compounds, and Element Badge.
-- Includes coordinate jitter handling to separate overlapping state centroids and a clear visual map legend.
+- Flagship intelligence visualization mapping **29 state/UT-level soil deficiency profiles** using Leaflet.js.
+- **Compound Color-Coded Multi-Badge Pin Markers**:
+  - 🔵 **Zinc Sulphate (Zn)**: Blue (`#2563eb`)
+  - 🟠 **Ferrous Sulphate / Iron (Fe)**: Orange (`#f97316`)
+  - 🟣 **Potassium Chloride (K)**: Purple (`#9333ea`)
+  - ⚪ **Non-Usable Region**: Slate Gray (`#6b7280`)
+- States with multiple applicable compounds display **multi-pill badge markers** (e.g. `[🔵 Zn | 🟣 K]`) directly on the map.
+- **Dynamic Live Metric Summary Cards** above the map: Mapped Soil Profiles, Intake Stock Batches, Approved Compounds, Active Recovery Matches.
+- **Compound Filter**: Filter map and state grid by All, Zinc Sulphate, Ferrous Sulphate, or Potassium Chloride.
+- **Real-Time State Search**: Instant text search filters map pins and reference grid simultaneously.
+- Interactive click popups displaying State Name, Status, Deficient Nutrients, Whitelisted Recovery Pathways (with exact compound badges), and Active Platform Match count.
+- Visualizes pharma source collection nodes, traceability flow lines, and partner processing facilities.
 
-### 5. Tamper-Evident Audit Trail (`/audit`)
+### 5. Partner Network (`/partners`)
+- Tracks **6 certified processing partner facilities** with capacity monitoring.
+- Partner assignment and material handoff recording within the pipeline workflow.
+
+### 6. Tamper-Evident Audit Trail (`/audit`)
 - Provides an **application-level tamper-evident hash-linked audit trail** using SHA-256 chain linkage (`previous_event_hash` $\to$ `event_hash`).
 - Re-verifies mathematical chain integrity upon request.
+- Tracks **561 audit events** across the platform lifecycle.
 
-### 6. Individual PDF Acknowledgement Generation
+### 7. Soil Re-Test Workflow (`/retests`)
+- Schedules and tracks **46 post-application soil re-test observations**.
+- Records re-test results to validate micronutrient recovery effectiveness.
+
+### 8. Individual PDF Acknowledgement Generation
 - Generates downloadable, in-memory PDF acknowledgement reports using ReportLab (`GET /api/reports/pdf/<batch_id>`).
 - Includes batch metadata, compliance verification, soil match details, dosage recommendations, partner assignment, and audit events.
 - Strictly validated: Only available for valid, successful, and matched pipeline operations.
@@ -131,7 +159,8 @@ To maintain project transparency and evaluation integrity:
 - **Stock & Compliance (`/stock`)**: Stock ledger, batch registration, and compliance queue.
 - **Recovery Pipeline (`/pipeline`)**: Step-by-step batch execution, soil matching, partner assignment, and PDF download.
 - **Dosage Calculator (`/dosage`)**: Independent What-If recovery simulator and ICAR dosage guide.
-- **Recovery Map (`/soil-map`)**: Interactive map with 29 color-coded deficiency area markers.
+- **Recovery Map (`/soil-map`)**: Flagship intelligence map with 29 multi-compound color-coded state markers, live metric cards, compound filters, and real-time state search.
+- **Partners (`/partners`)**: Certified processing facility directory and capacity tracking.
 - **About (`/about`)**: Methodology, chemical standards, regulatory compliance, and project scope details.
 
 ---
@@ -170,7 +199,7 @@ pip install -r requirements.txt
 ### 2. Initialize Database & Start Server
 
 ```bash
-# Seed SQLite database with reference datasets (29 deficiency regions, 45 demo batches, 6 partners)
+# Seed SQLite database with reference datasets (29 deficiency regions, 53 batches, 6 partners)
 python load_data.py
 
 # Launch Flask development server
@@ -194,6 +223,8 @@ python -m pytest tests
 ```text
 SIH-198/
 ├── README.md                           # Master project documentation
+├── Demo_Expired_Stock_Intake_Data_UPDATED.xlsx   # Source intake batch data (53 batches)
+├── State_Soil_Deficiency_Medicine_Match_FILTERED.xlsx  # Source soil deficiency data (29 profiles)
 └── starter_kit/starter/
     ├── app.py                          # Main Flask Application & REST API endpoints
     ├── app.db                          # SQLite Database
@@ -210,14 +241,17 @@ SIH-198/
     │   ├── stock.html                  # Stock & Compliance Ledger
     │   ├── pipeline.html               # Recovery Pipeline & PDF Download
     │   ├── dosage.html                 # Dosage Calculator & Simulator
-    │   ├── soil_map.html               # Recovery Map with 29 Deficiency Markers
+    │   ├── soil_map.html               # Recovery Map — Flagship Intelligence Visualization
+    │   ├── partners.html               # Partner Facility Directory
+    │   ├── network.html                # Network Map (alternate view)
     │   └── about.html                  # Methodology & System Specs
     ├── static/                         # CSS Stylesheets & JavaScript Assets
     │   ├── style.css                   # Custom CSS Design System
-    │   └── script.js                  # Frontend Interactivity
-    ├── data/                           # JSON Reference Datasets
+    │   └── script.js                   # Frontend Interactivity
+    ├── data/                           # JSON Reference Datasets & CSV
     │   ├── compounds.json              # Whitelisted mineral salts
-    │   └── soil_deficiency.json        # 29 State soil deficiency baseline
+    │   ├── soil_deficiency.json        # 29 State soil deficiency baseline
+    │   └── demo_intake.csv             # 53 Demo intake batch records
     └── tests/                          # Automated Test Suite (88 tests)
         ├── test_dosage.py
         ├── test_enhancements.py
@@ -239,13 +273,15 @@ SIH-198/
 ### Currently Implemented
 - ✅ Whitelist compliance engine for single-compound salts
 - ✅ Pincode to coordinate resolution & distance calculation
-- ✅ State-level soil-deficiency matching engine
+- ✅ State-level soil-deficiency matching engine (29 profiles, 51 active matches)
 - ✅ Rule-based dosage calculation model with severity multipliers
 - ✅ Ferrous Sulphate foliar spray guidance
-- ✅ Interactive 29 deficiency markers map with element color coding
-- ✅ Tamper-evident SHA-256 hash-linked audit chain
+- ✅ Flagship Recovery Map with multi-compound color-coded badge markers (🔵 Zn, 🟠 Fe, 🟣 K)
+- ✅ Live metric summary cards, compound filter, and real-time state search on map
+- ✅ Tamper-evident SHA-256 hash-linked audit chain (561 events)
 - ✅ Individual Acknowledgement PDF download for successful pipeline batches
-- ✅ Certified partner capacity tracking & handoff logging
+- ✅ Certified partner capacity tracking & handoff logging (6 partners)
+- ✅ Post-application soil re-test workflow (46 re-tests)
 
 ### Future Scope (Post-Hackathon)
 - 🔮 Real-time CPCB / FDA portal API integration
