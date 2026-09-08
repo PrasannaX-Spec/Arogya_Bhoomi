@@ -10,82 +10,146 @@
 {% block content %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<!-- Title Subtitle Banner -->
-<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(to right, #f4f8f5, #ffffff); border-left: 4px solid #2d6a4f;">
-    <h3 style="margin: 0; color: #1b4332;">Geographic Recovery Network &amp; Soil Deficiency Areas</h3>
-    <p style="margin: 0.25rem 0 0 0; color: #555; font-size: 0.9rem;">
-        Visualize pharma source locations, 29 mapped soil deficiency areas with element-coded markers, and recovery partner facilities across India.
-    </p>
+<!-- Header Subtitle Banner -->
+<div class="card" style="margin-bottom: 1.25rem; background: linear-gradient(to right, #f4f8f5, #ffffff); border-left: 4px solid #2d6a4f;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h3 style="margin: 0; color: #1b4332; font-weight: 700;">Geographic Recovery Network &amp; Soil Deficiency Intelligence</h3>
+            <p style="margin: 0.25rem 0 0 0; color: #555; font-size: 0.88rem;">
+                Visualizing pharmaceutical source collection nodes, 29 mapped Indian state soil deficiency regions with color-coded compound pathways, and certified processing facilities.
+            </p>
+        </div>
+        <div>
+            <span class="badge badge-success" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;">Arogya Bhoomi Intelligence Engine</span>
+        </div>
+    </div>
 </div>
 
-<!-- Map Filter Bar -->
-<div class="map-filter-bar" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; background: #ffffff; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e0e0e0; flex-wrap: wrap;">
-    <div class="filter-group">
-        <span class="filter-label" style="font-weight: 600; font-size: 0.85rem; color: #333;">Compound Filter:</span>
-        <select id="filterCompound" class="form-select" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem;">
+<!-- Dynamic Summary Metric Cards (4 Cards derived from live platform data) -->
+<div class="grid grid-4" style="margin-bottom: 1.25rem;">
+    <div class="map-stat-card">
+        <div class="map-stat-icon" style="background: #eef2ff; color: #3730a3;">🗺️</div>
+        <div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #1b4332; line-height: 1.1;" id="statStatesCount">29</div>
+            <div style="font-size: 0.78rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;">Mapped Soil Profiles</div>
+        </div>
+    </div>
+
+    <div class="map-stat-card">
+        <div class="map-stat-icon" style="background: #ecfdf5; color: #047857;">📦</div>
+        <div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #1b4332; line-height: 1.1;" id="statBatchesCount">53</div>
+            <div style="font-size: 0.78rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;">Intake Stock Batches</div>
+        </div>
+    </div>
+
+    <div class="map-stat-card">
+        <div class="map-stat-icon" style="background: #fdf4ff; color: #86198f;">🧪</div>
+        <div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #1b4332; line-height: 1.1;">3</div>
+            <div style="font-size: 0.78rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;">Approved Compounds</div>
+        </div>
+    </div>
+
+    <div class="map-stat-card">
+        <div class="map-stat-icon" style="background: #fff7ed; color: #c2410c;">⚡</div>
+        <div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #1b4332; line-height: 1.1;" id="statMatchesCount">51</div>
+            <div style="font-size: 0.78rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;">Active Recovery Matches</div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Filter & Control Bar -->
+<div class="map-filter-bar" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; background: #ffffff; padding: 0.75rem 1.25rem; border-radius: 8px; border: 1px solid #e0e0e0; flex-wrap: wrap;">
+    <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+        <span class="filter-label" style="font-weight: 700; font-size: 0.85rem; color: #1b4332;">Compound Filter:</span>
+        <select id="filterCompound" class="form-control" style="width: auto; padding: 0.4rem 0.75rem; font-size: 0.85rem; border-radius: 6px; font-weight: 600;">
             <option value="All">All Approved Compounds</option>
-            <option value="Zinc Sulphate">Zinc Sulphate (Zn)</option>
-            <option value="Ferrous Sulphate">Ferrous Sulphate (Fe)</option>
-            <option value="Potassium Chloride">Potassium Chloride (K)</option>
+            <option value="Zinc Sulphate">🔵 Zinc Sulphate (Zn)</option>
+            <option value="Ferrous Sulphate">🟠 Ferrous Sulphate (Fe)</option>
+            <option value="Potassium Chloride">🟣 Potassium Chloride (K)</option>
         </select>
     </div>
 
-    <div class="filter-group">
-        <span class="filter-label" style="font-weight: 600; font-size: 0.85rem; color: #333;">Deficiency Status:</span>
-        <select id="filterStatus" class="form-select" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem;">
+    <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+        <span class="filter-label" style="font-weight: 700; font-size: 0.85rem; color: #1b4332;">Deficiency Status:</span>
+        <select id="filterStatus" class="form-control" style="width: auto; padding: 0.4rem 0.75rem; font-size: 0.85rem; border-radius: 6px; font-weight: 600;">
             <option value="All">All 29 Mapped Regions</option>
             <option value="usable">Usable Deficient States Only</option>
         </select>
     </div>
 
-    <div style="margin-left: auto; font-size: 0.85rem; color: #555;">
-        Showing <strong id="visibleFlowsCount" style="color: #1b4332;">0</strong> active traceability recovery flows
+    <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" id="searchStateInput" placeholder="🔍 Search state name..." class="form-control" style="width: 190px; padding: 0.4rem 0.75rem; font-size: 0.85rem; border-radius: 6px;" />
+    </div>
+
+    <div style="margin-left: auto; font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 0.5rem;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite;"></span>
+        Showing <strong id="visibleFlowsCount" style="color: #1b4332; font-size: 0.95rem;">0</strong> active traceability recovery flows
     </div>
 </div>
 
 <!-- Leaflet Map Container -->
-<div class="card" style="margin-bottom: 1.5rem; padding: 0; overflow: hidden; border-radius: 8px;">
-    <div id="map" class="map-container" style="height: 500px; width: 100%; z-index: 1;"></div>
+<div class="card" style="margin-bottom: 1.25rem; padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+    <div id="map" class="map-container" style="height: 520px; width: 100%; z-index: 1; background: #f8fafc;"></div>
     
     <!-- Legend Bar below Map -->
     <div style="background: #ffffff; padding: 0.85rem 1.25rem; border-top: 1px solid #e0e0e0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.85rem;">
         <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
-            <span style="font-weight: 700; color: #1b4332;">Soil Deficiency (29 Areas):</span>
+            <span style="font-weight: 700; color: #1b4332;">Soil Deficiency &amp; Recovery Pathways:</span>
+            
             <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 12px; height: 12px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
-                <span>🟢 Zinc (Zn)</span>
+                <span class="map-pin-pill compound-badge-zn">Zn</span>
+                <span style="font-weight: 600; color: #1e3a8a;">Zinc Sulphate (Blue)</span>
             </div>
+            
             <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 12px; height: 12px; border-radius: 50%; background: #2563eb; display: inline-block;"></span>
-                <span>🔵 Iron (Fe)</span>
+                <span class="map-pin-pill compound-badge-fe">Fe</span>
+                <span style="font-weight: 600; color: #7c2d12;">Ferrous Sulphate (Orange)</span>
             </div>
+
             <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 12px; height: 12px; border-radius: 50%; background: #f97316; display: inline-block;"></span>
-                <span>🟠 Potassium (K)</span>
+                <span class="map-pin-pill compound-badge-k">K</span>
+                <span style="font-weight: 600; color: #581c87;">Potassium Chloride (Purple)</span>
             </div>
+
             <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 12px; height: 12px; border-radius: 50%; background: #6b7280; display: inline-block;"></span>
-                <span>⚪ Non-Usable Region</span>
+                <span class="map-pin-pill compound-badge-nonusable">N/A</span>
+                <span style="color: #6b7280;">Non-Usable Region</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; border-left: 1px solid #ddd; padding-left: 0.75rem;">
+                <span style="background: #1b4332; color: #fff; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">📦</span>
+                <span>Pharma Source Node</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="background: #3b82f6; color: #fff; border-radius: 4px; padding: 1px 5px; font-size: 10px; font-weight: bold;">🏭 Partner</span>
+                <span>Processing Partner</span>
             </div>
         </div>
-        <div style="font-size: 0.78rem; color: #666;">
-            Click any deficiency marker to view detailed state deficiency profile
+
+        <div style="font-size: 0.78rem; color: #666; font-style: italic;">
+            Click any state pin for full deficiency profile &amp; recovery match statistics
         </div>
     </div>
 </div>
 
 <!-- Authoritative State Deficiency Data Reference Grid -->
 <div class="card">
-    <div class="card-header">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
         <div>
-            <h3 class="card-title">Authoritative State Deficiency Reference Data</h3>
-            <span class="text-sm text-muted">29 Indian states mapped for micronutrient deficiency</span>
+            <h3 class="card-title" style="margin: 0; color: #1b4332;">Authoritative State Deficiency Reference Data</h3>
+            <span class="text-sm text-muted">29 Indian states evaluated for micronutrient soil deficiency &amp; compound suitability</span>
         </div>
-        <span class="badge badge-success">29 States Evaluated</span>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge badge-success" id="stateEvaluatedBadge">29 States Evaluated</span>
+        </div>
     </div>
 
-    <div class="grid grid-3" id="stateGrid">
-        <div style="grid-column: 1 / -1; text-align: center; color: #777; padding: 1.5rem;">Loading state soil deficiency records...</div>
+    <div class="grid grid-3" id="stateGrid" style="margin-top: 1rem;">
+        <div style="grid-column: 1 / -1; text-align: center; color: #777; padding: 2rem;">Loading state soil deficiency records...</div>
     </div>
 </div>
 {% endblock %}
@@ -95,6 +159,7 @@
 <script>
 let map;
 let networkData = null;
+let allSoilStates = [];
 let markersLayer;
 let linesLayer;
 
@@ -118,45 +183,75 @@ async function initNetworkMap() {
         map.setView([20.5937, 78.9629], 5);
     });
 
-    document.getElementById('filterCompound').addEventListener('change', renderNetwork);
-    document.getElementById('filterStatus').addEventListener('change', renderNetwork);
+    document.getElementById('filterCompound').addEventListener('change', () => {
+        renderNetwork();
+        filterStateGrid();
+    });
+
+    document.getElementById('filterStatus').addEventListener('change', () => {
+        renderNetwork();
+        filterStateGrid();
+    });
+
+    document.getElementById('searchStateInput').addEventListener('input', () => {
+        renderNetwork();
+        filterStateGrid();
+    });
 
     try {
         const res = await fetch('/api/network_data');
         networkData = await res.json();
+
+        // Also fetch general stats for metrics cards
+        const statsRes = await fetch('/api/stats');
+        const stats = await statsRes.json();
+        if (stats) {
+            if (stats.batches_processed) document.getElementById('statBatchesCount').textContent = stats.batches_processed;
+            if (stats.soil_deficiency_matches) document.getElementById('statMatchesCount').textContent = stats.soil_deficiency_matches;
+            if (stats.states_involved) document.getElementById('statStatesCount').textContent = stats.states_involved;
+        }
+
         renderNetwork();
     } catch (err) {
         console.error('Error fetching network data:', err);
     }
 }
 
-function getDeficiencyMarkerStyle(st, filterComp) {
-    if (st.status !== 'usable') {
-        return { color: '#6b7280', label: 'Non-Usable Region' };
+function getCompoundBadgeHtml(compoundName) {
+    if (compoundName.includes('Zinc')) {
+        return `<span class="map-pin-pill compound-badge-zn">Zn</span>`;
+    } else if (compoundName.includes('Ferrous') || compoundName.includes('Iron')) {
+        return `<span class="map-pin-pill compound-badge-fe">Fe</span>`;
+    } else if (compoundName.includes('Potassium')) {
+        return `<span class="map-pin-pill compound-badge-k">K</span>`;
+    }
+    return '';
+}
+
+function getMultiCompoundBadge(usableList, status, filterComp) {
+    if (status !== 'usable') {
+        return `<span class="map-pin-pill compound-badge-nonusable">N/A</span>`;
     }
 
-    const usableList = Array.isArray(st.usable_compounds) ? st.usable_compounds : (st.usable_compounds || '').split(',');
-    const defsList = Array.isArray(st.deficient_nutrients) ? st.deficient_nutrients : (st.deficient_nutrients || '').split(',');
+    let html = '';
+    const filteredList = usableList.filter(c => {
+        if (filterComp && filterComp !== 'All') {
+            return c.toLowerCase().includes(filterComp.toLowerCase());
+        }
+        return true;
+    });
 
-    const compsStr = usableList.join(' ');
-    const defsStr = defsList.join(' ');
+    filteredList.forEach(c => {
+        html += getCompoundBadgeHtml(c);
+    });
 
-    if (filterComp && filterComp !== 'All') {
-        if (filterComp === 'Zinc Sulphate') return { color: '#22c55e', label: 'Zinc Sulphate (Zn)' };
-        if (filterComp === 'Ferrous Sulphate') return { color: '#2563eb', label: 'Ferrous Sulphate (Fe)' };
-        if (filterComp === 'Potassium Chloride') return { color: '#f97316', label: 'Potassium Chloride (K)' };
+    if (!html) {
+        usableList.forEach(c => {
+            html += getCompoundBadgeHtml(c);
+        });
     }
 
-    // Determine primary element for marker color
-    if (compsStr.includes('Zinc Sulphate') || defsStr.includes('Zn')) {
-        return { color: '#22c55e', label: 'Zinc Sulphate (Zn)' };
-    } else if (compsStr.includes('Ferrous Sulphate') || defsStr.includes('Fe')) {
-        return { color: '#2563eb', label: 'Ferrous Sulphate (Fe)' };
-    } else if (compsStr.includes('Potassium Chloride') || defsStr.includes('K')) {
-        return { color: '#f97316', label: 'Potassium Chloride (K)' };
-    }
-
-    return { color: '#22c55e', label: 'Micronutrient Deficient' };
+    return html || `<span class="map-pin-pill compound-badge-nonusable">Excl</span>`;
 }
 
 function renderNetwork() {
@@ -167,10 +262,11 @@ function renderNetwork() {
 
     const compoundFilter = document.getElementById('filterCompound').value;
     const statusFilter = document.getElementById('filterStatus').value;
+    const searchQuery = (document.getElementById('searchStateInput').value || '').trim().toLowerCase();
 
     let visibleFlows = 0;
 
-    // 1. Draw Sources
+    // 1. Draw Sources (Intake facilities)
     (networkData.sources || []).forEach(src => {
         const lat = src.latitude || src.coords?.[0];
         const lon = src.longitude || src.coords?.[1];
@@ -180,23 +276,29 @@ function renderNetwork() {
 
         const icon = L.divIcon({
             className: 'custom-map-pin pin-source',
-            html: `<div style="background:#1b4332; color:#fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:11px; border:2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${count}</div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14]
+            html: `<div style="background:#1b4332; color:#fff; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:11px; border:2px solid #fff; box-shadow: 0 3px 6px rgba(0,0,0,0.3);" title="${src.name}">📦 ${count}</div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
         });
 
         const marker = L.marker([lat, lon], { icon: icon });
-        let popContent = `<div style="font-family:Inter,sans-serif; padding:4px;">
-            <strong style="color:#1b4332; font-size:13px;">${src.name || src.location}</strong><br/>
-            <span style="font-size:11px; color:#555;">Intake Source Location</span>
+        let popContent = `<div style="font-family:Inter,sans-serif; padding:6px; min-width:180px;">
+            <div style="font-weight:700; color:#1b4332; font-size:13px; border-bottom:1px solid #eee; padding-bottom:4px; margin-bottom:4px;">
+                📦 ${src.name || src.location}
+            </div>
+            <div style="font-size:11px; color:#555;">Intake Collection Source Node</div>
+            <div style="font-size:11px; color:#1b4332; font-weight:600; margin-top:2px;">Tracked Batches: ${count}</div>
         </div>`;
         marker.bindPopup(popContent);
         markersLayer.addLayer(marker);
     });
 
-    // 2. Draw 29 Soil Deficiency Area Markers with Element Color Coding
+    // 2. Draw 29 Soil Deficiency Area Markers with Element-Coded Badges
     const defItems = networkData.deficiencies || networkData.states || [];
     defItems.forEach((st, idx) => {
+        const stateName = st.name || st.state;
+        if (searchQuery && !stateName.toLowerCase().includes(searchQuery)) return;
+
         const lat = st.latitude || st.coords?.[0];
         const lon = st.longitude || st.coords?.[1];
         if (!lat || !lon) return;
@@ -211,53 +313,66 @@ function renderNetwork() {
             if (!hasComp && st.status === 'usable') return;
         }
 
-        const markerInfo = getDeficiencyMarkerStyle(st, compoundFilter);
+        const badgesHtml = getMultiCompoundBadge(usableList, st.status, compoundFilter);
+        const shortState = stateName.length > 10 ? stateName.substring(0, 9) + '..' : stateName;
 
         // Small deterministic jitter to prevent exact overlapping markers
-        const latOffset = (idx % 3 - 1) * 0.04;
-        const lonOffset = (Math.floor(idx / 3) % 3 - 1) * 0.04;
+        const latOffset = (idx % 3 - 1) * 0.035;
+        const lonOffset = (Math.floor(idx / 3) % 3 - 1) * 0.035;
         const finalLat = lat + latOffset;
         const finalLon = lon + lonOffset;
 
-        const circle = L.circleMarker([finalLat, finalLon], {
-            radius: st.status === 'usable' ? 10 : 7,
-            fillColor: markerInfo.color,
-            color: '#ffffff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.9
+        const icon = L.divIcon({
+            className: 'custom-map-pin pin-deficiency',
+            html: `<div class="map-compound-pin">
+                <span style="color:#1b4332; font-weight:700;">${shortState}</span>
+                ${badgesHtml}
+            </div>`,
+            iconSize: [110, 26],
+            iconAnchor: [55, 13]
+        });
+
+        const marker = L.marker([finalLat, finalLon], { icon: icon });
+
+        // Count active matches for this state
+        const stateMatches = (networkData.flows || []).filter(f => f.target_deficiency?.state === stateName);
+        const matchCount = stateMatches.length;
+
+        let compoundBadgesDetail = '';
+        usableList.forEach(c => {
+            if (c.includes('Zinc')) compoundBadgesDetail += `<span class="map-pin-pill compound-badge-zn" style="font-size:10px; margin-right:3px;">🔵 Zinc Sulphate (Zn)</span>`;
+            else if (c.includes('Ferrous') || c.includes('Iron')) compoundBadgesDetail += `<span class="map-pin-pill compound-badge-fe" style="font-size:10px; margin-right:3px;">🟠 Ferrous Sulphate (Fe)</span>`;
+            else if (c.includes('Potassium')) compoundBadgesDetail += `<span class="map-pin-pill compound-badge-k" style="font-size:10px; margin-right:3px;">🟣 Potassium Chloride (K)</span>`;
         });
 
         const popContent = `
-            <div style="font-family:Inter,sans-serif; padding:6px; min-width:210px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:4px; margin-bottom:6px;">
-                    <strong style="color:#1b4332; font-size:13px;">${st.name || st.state}</strong>
+            <div style="font-family:Inter,sans-serif; padding:6px; min-width:230px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:6px; margin-bottom:6px;">
+                    <strong style="color:#1b4332; font-size:14px;">${stateName}</strong>
                     <span class="badge ${st.status === 'usable' ? 'badge-success' : 'badge-pending'}" style="font-size:10px;">
-                        ${st.status === 'usable' ? 'Usable Deficient' : 'Non-Usable'}
+                        ${st.status === 'usable' ? '✓ Usable Deficient' : 'Non-Usable'}
                     </span>
                 </div>
                 <div style="font-size:11px; color:#444; margin-bottom:4px;">
-                    <strong>Deficient Nutrients:</strong> <span style="color:#1b4332; font-weight:600;">${defsList.join(', ') || 'N/A'}</span>
+                    <strong>Soil Deficiency:</strong> <span style="color:#1b4332; font-weight:700;">${defsList.join(', ') || 'N/A'}</span>
                 </div>
-                <div style="font-size:11px; color:#444; margin-bottom:4px;">
-                    <strong>Usable Compounds:</strong> <span style="color:#2d6a4f; font-weight:600;">${usableList.join(', ') || 'None (Excluded)'}</span>
+                <div style="font-size:11px; color:#444; margin-bottom:6px;">
+                    <strong>Whitelisted Recovery Pathways:</strong><br/>
+                    <div style="margin-top:3px;">${compoundBadgesDetail || '<span style="color:#666;">None (Excluded)</span>'}</div>
                 </div>
-                <div style="font-size:11px; color:#444; margin-bottom:4px;">
-                    <strong>Deficiency Element:</strong> 
-                    <span style="display:inline-block; padding:2px 6px; border-radius:4px; color:#fff; background:${markerInfo.color}; font-weight:bold; font-size:10px;">
-                        ${markerInfo.label}
-                    </span>
+                <div style="font-size:11px; color:#444; margin-bottom:4px; background:#f4f8f5; padding:4px 6px; border-radius:4px;">
+                    <strong>Active Platform Matches:</strong> <span style="color:#2d6a4f; font-weight:800;">${matchCount} batch match(es)</span>
                 </div>
                 <div style="font-size:10px; color:#777; margin-top:6px; border-top:1px dashed #ddd; padding-top:4px;">
-                    Authoritative State Deficiency Record (1 of 29 Mapped Regions)
+                    State Soil Profile Record (ICAR/Arogya Bhoomi Mapped)
                 </div>
             </div>
         `;
-        circle.bindPopup(popContent);
-        markersLayer.addLayer(circle);
+        marker.bindPopup(popContent);
+        markersLayer.addLayer(marker);
     });
 
-    // 3. Draw Partners
+    // 3. Draw Partners (Processing facilities)
     (networkData.partners || []).forEach(pt => {
         const lat = pt.latitude || pt.coords?.[0];
         const lon = pt.longitude || pt.coords?.[1];
@@ -265,15 +380,16 @@ function renderNetwork() {
 
         const icon = L.divIcon({
             className: 'custom-map-pin pin-partner',
-            html: `<div style="background:#2563eb; color:#fff; border-radius:4px; padding:2px 6px; font-weight:bold; font-size:10px; border:1px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏭 Partner</div>`,
-            iconSize: [60, 20],
-            iconAnchor: [30, 10]
+            html: `<div style="background:#2563eb; color:#fff; border-radius:4px; padding:2px 7px; font-weight:bold; font-size:10px; border:1px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏭 ${pt.name}</div>`,
+            iconSize: [110, 22],
+            iconAnchor: [55, 11]
         });
 
         const marker = L.marker([lat, lon], { icon: icon });
         let popContent = `<div style="font-family:Inter,sans-serif; padding:4px;">
-            <strong style="color:#1e40af; font-size:13px;">${pt.name}</strong><br/>
-            <span style="font-size:11px; color:#555;">${pt.location}, ${pt.state}</span>
+            <strong style="color:#1e40af; font-size:13px;">🏭 ${pt.name}</strong><br/>
+            <span style="font-size:11px; color:#555;">${pt.location}, ${pt.state}</span><br/>
+            <span style="font-size:10px; color:#1e40af; font-weight:600;">Certified Processing Facility</span>
         </div>`;
         marker.bindPopup(popContent);
         markersLayer.addLayer(marker);
@@ -291,16 +407,22 @@ function renderNetwork() {
         if (srcLat && srcLon && tgtLat && tgtLon) {
             visibleFlows++;
             const latlngs = [[srcLat, srcLon], [tgtLat, tgtLon]];
+            
+            let lineColor = '#2563eb';
+            if (fl.compound?.includes('Zinc')) lineColor = '#2563eb';
+            else if (fl.compound?.includes('Ferrous') || fl.compound?.includes('Iron')) lineColor = '#f97316';
+            else if (fl.compound?.includes('Potassium')) lineColor = '#9333ea';
+
             const polyline = L.polyline(latlngs, {
-                color: fl.assigned_partner ? '#2563eb' : '#d97706',
+                color: lineColor,
                 weight: 3,
                 dashArray: '6, 6',
-                opacity: 0.8
+                opacity: 0.85
             });
 
             let popContent = `<div style="font-family:Inter,sans-serif; padding:4px;">
-                <strong style="color:#1b4332; font-size:12px;">Batch: ${fl.batch_id} (${fl.compound})</strong><br/>
-                <span style="font-size:11px; color:#333;">Quantity: <b>${fl.quantity_kg} kg</b></span><br/>
+                <strong style="color:#1b4332; font-size:12px;">Match ID: #${fl.match_id} (${fl.compound})</strong><br/>
+                <span style="font-size:11px; color:#333;">Batch Qty: <b>${fl.quantity_kg} kg</b></span><br/>
                 <span style="font-size:11px; color:#555;">Source: ${fl.source?.name} &rarr; Target: <b>${fl.target_deficiency?.state}</b></span>
             </div>`;
             polyline.bindPopup(popContent);
@@ -315,39 +437,79 @@ function loadStateDeficiencyGrid() {
     fetch('/api/soil_deficiency')
         .then(res => res.json())
         .then(data => {
-            const grid = document.getElementById('stateGrid');
-            const states = data.states || data || [];
-            if (states.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center;">No state records found.</div>';
-                return;
-            }
-
-            let html = '';
-            states.forEach(s => {
-                const isUsable = s.status === 'usable';
-                const compList = Array.isArray(s.usable_compounds) ? s.usable_compounds.join(', ') : (s.usable_compounds || 'None');
-                const defs = Array.isArray(s.deficient_nutrients) ? s.deficient_nutrients.join(', ') : (s.deficient_nutrients || 'None');
-
-                html += `
-                    <div class="state-card ${isUsable ? 'state-usable' : 'state-not-usable'}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                            <strong style="color:#1b4332; font-size:1rem;">${s.state}</strong>
-                            <span class="badge ${isUsable ? 'badge-success' : 'badge-pending'}" style="font-size:0.7rem;">
-                                ${isUsable ? '✓ Deficient / Usable' : 'Not Usable'}
-                            </span>
-                        </div>
-                        <div style="font-size:0.8rem; color:#444; margin-bottom:0.25rem;">
-                            <strong>Deficient Nutrients:</strong> ${defs}
-                        </div>
-                        <div style="font-size:0.8rem; color:#555;">
-                            <strong>Usable Compounds:</strong> ${compList}
-                        </div>
-                    </div>
-                `;
-            });
-            grid.innerHTML = html;
+            allSoilStates = data.states || data || [];
+            filterStateGrid();
         })
         .catch(err => console.error("Error loading state deficiency grid:", err));
+}
+
+function filterStateGrid() {
+    const grid = document.getElementById('stateGrid');
+    if (!allSoilStates || allSoilStates.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 2rem;">No state records found.</div>';
+        return;
+    }
+
+    const compoundFilter = document.getElementById('filterCompound').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const searchQuery = (document.getElementById('searchStateInput').value || '').trim().toLowerCase();
+
+    let filtered = allSoilStates.filter(s => {
+        if (searchQuery && !s.state.toLowerCase().includes(searchQuery)) return false;
+        if (statusFilter === 'usable' && s.status !== 'usable') return false;
+
+        if (compoundFilter !== 'All') {
+            const usableList = Array.isArray(s.usable_compounds) ? s.usable_compounds : (s.usable_compounds || '').split(',');
+            const hasComp = usableList.some(c => c.toLowerCase().includes(compoundFilter.toLowerCase()));
+            if (!hasComp && s.status === 'usable') return false;
+        }
+
+        return true;
+    });
+
+    document.getElementById('stateEvaluatedBadge').textContent = `${filtered.length} of 29 States Mapped`;
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:#777; padding: 2rem;">No state soil records match the selected filters.</div>';
+        return;
+    }
+
+    let html = '';
+    filtered.forEach(s => {
+        const isUsable = s.status === 'usable';
+        const usableList = Array.isArray(s.usable_compounds) ? s.usable_compounds : (s.usable_compounds || '').split(',').map(x => x.trim());
+        const defsList = Array.isArray(s.deficient_nutrients) ? s.deficient_nutrients : (s.deficient_nutrients || '').split(',').map(x => x.trim());
+
+        let compBadges = '';
+        if (isUsable && usableList.length > 0) {
+            usableList.forEach(c => {
+                if (c.includes('Zinc')) compBadges += `<span class="map-pin-pill compound-badge-zn" style="margin-right:4px;">🔵 Zn</span>`;
+                else if (c.includes('Ferrous') || c.includes('Iron')) compBadges += `<span class="map-pin-pill compound-badge-fe" style="margin-right:4px;">🟠 Fe</span>`;
+                else if (c.includes('Potassium')) compBadges += `<span class="map-pin-pill compound-badge-k" style="margin-right:4px;">🟣 K</span>`;
+            });
+        } else {
+            compBadges = `<span class="map-pin-pill compound-badge-nonusable">Excluded</span>`;
+        }
+
+        html += `
+            <div class="state-card ${isUsable ? 'state-usable' : 'state-not-usable'}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <strong style="color:#1b4332; font-size:0.98rem;">${s.state}</strong>
+                    <span class="badge ${isUsable ? 'badge-success' : 'badge-pending'}" style="font-size:0.7rem;">
+                        ${isUsable ? '✓ Deficient / Usable' : 'Non-Usable'}
+                    </span>
+                </div>
+                <div style="font-size:0.8rem; color:#444; margin-bottom:0.35rem;">
+                    <strong>Soil Deficiency:</strong> <span style="font-weight:600; color:#1b4332;">${defsList.join(', ') || 'N/A'}</span>
+                </div>
+                <div style="font-size:0.8rem; color:#555; display:flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">
+                    <strong>Usable Compounds:</strong>
+                    <div style="margin-left:0.25rem;">${compBadges}</div>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
 }
 </script>
 {% endblock %}

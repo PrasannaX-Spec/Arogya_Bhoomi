@@ -1405,4 +1405,80 @@ h1, h2, h3, h4 {
   opacity: 0.75;
 }
 
+/* Recovery Map Compound Color Palette & Pin Styling */
+.compound-badge-zn {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.compound-badge-fe {
+  background-color: #f97316 !important;
+  color: #ffffff !important;
+}
+
+.compound-badge-k {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+}
+
+.compound-badge-nonusable {
+  background-color: #6b7280 !important;
+  color: #ffffff !important;
+}
+
+.map-compound-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ffffff;
+  padding: 3px 6px;
+  border-radius: 12px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.map-compound-pin:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+  z-index: 999;
+}
+
+.map-pin-pill {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.map-stat-card {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.map-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+
 
