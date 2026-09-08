@@ -1,6 +1,7 @@
-# 🌱 Nirmūla Recovery Platform
+# 🌱 Arogya Bhoomi
 
-> **Traceable Recovery & Deployment Platform for Micronutrient Compounds from Expired Pharmaceuticals**  
+> **Healthy Soil • Healthy Life**  
+> *Traceable Recovery & Deployment Platform for Micronutrient Compounds from Expired Pharmaceuticals*  
 > *Smart India Hackathon (SIH) 2026 — Problem Statement ID: 198*
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
@@ -17,13 +18,13 @@ India faces a dual agricultural and pharmaceutical management challenge:
 - Tons of single-compound expired pharmaceutical stocks are discarded annually without structured circular utilization.
 - Indian agricultural soils suffer from severe micronutrient deficiencies (**49% Zinc deficient**, **>33% Iron deficient**, and **significant Potassium deficits**).
 
-**Nirmūla** creates a transparent, verifiable, rule-based circular recovery bridge. It registers expired pharmaceutical stock, validates chemical composition against an approved single-compound whitelist, resolves source locations, pairs inventory with documented state-level soil deficiency requirements, calculates agronomic dosage recommendations, assigns certified partner processing facilities, and logs every step in a tamper-evident audit ledger.
+**Arogya Bhoomi** creates a transparent, verifiable, rule-based circular recovery bridge. It registers expired pharmaceutical stock, validates chemical composition against an approved single-compound whitelist, resolves source locations, pairs inventory with documented state-level soil deficiency requirements, calculates agronomic dosage recommendations, assigns certified partner processing facilities, and logs every step in a tamper-evident audit ledger.
 
 ---
 
 ## 🧪 Core Approved Compounds
 
-Nirmūla exclusively processes three high-purity single-compound micronutrient salts:
+Arogya Bhoomi exclusively processes three high-purity single-compound micronutrient salts:
 
 1. **Ferrous Sulphate ($\text{FeSO}_4 \cdot 7\text{H}_2\text{O}$)** — Target Nutrients: **Iron (Fe)** — *20.1% Elemental Fe*
 2. **Zinc Sulphate ($\text{ZnSO}_4 \cdot 7\text{H}_2\text{O}$)** — Target Nutrients: **Zinc (Zn)** — *21.0% Elemental Zn*
@@ -255,5 +256,5 @@ SIH-198/
 ---
 
 <div align="center">
-  <sub>Smart India Hackathon (SIH) 2026 — Problem Statement 198 | Nirmūla Recovery Platform</sub>
+  <sub>Smart India Hackathon (SIH) 2026 — Problem Statement 198 | Arogya Bhoomi — Healthy Soil • Healthy Life</sub>
 </div>

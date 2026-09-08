@@ -1,4 +1,4 @@
-// Nirmūla Compliance Platform — Global Scripts
+// Arogya Bhoomi — Global Scripts
 // Vanilla JavaScript for enterprise UI controls
 
 document.addEventListener('DOMContentLoaded', function () {

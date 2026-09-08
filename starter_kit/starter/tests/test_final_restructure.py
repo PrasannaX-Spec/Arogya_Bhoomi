@@ -1,5 +1,5 @@
 """
-test_final_restructure.py — Test suite for the final Nirmūla project restructure.
+test_final_restructure.py — Test suite for the final Arogya Bhoomi project restructure.
 Verifies core requirements including navigation routes, pipeline execution,
 dosage calculator isolation, and end-to-end judge demonstration flow.
 """

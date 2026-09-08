@@ -1,5 +1,5 @@
 """
-test_enhancements.py — Unit tests for Nirmūla Platform UI & Analytics Enhancements
+test_enhancements.py — Unit tests for Arogya Bhoomi UI & Analytics Enhancements
 Tests:
   1. GET /api/impact_stats — Environmental & Agricultural Impact Metrics
   2. GET /api/network_data — Recovery Network Geo-nodes & Traceability Flows
@@ -32,7 +32,7 @@ def test_impact_stats_api(client):
     assert "pharma_stock_tracked_kg" in data
     assert data["pharma_stock_tracked_kg"] > 0
     assert "batches_processed" in data
-    assert data["batches_processed"] == 45
+    assert data["batches_processed"] == 53
 
     assert "elemental_nutrients_kg" in data
     elem = data["elemental_nutrients_kg"]

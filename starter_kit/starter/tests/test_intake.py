@@ -62,9 +62,9 @@ def test_run_all_pending():
     print(f"  Accepted: {result['accepted']}")
     print(f"  Rejected: {result['rejected']}")
 
-    assert result["accepted"] == 45, f"Expected 45 accepted, got {result['accepted']}"
+    assert result["accepted"] == 53, f"Expected 53 accepted, got {result['accepted']}"
     assert result["rejected"] == 0, f"Expected 0 rejected, got {result['rejected']}"
-    print("  PASSED - All 45 demo rows accepted\n")
+    print("  PASSED - All 53 demo rows accepted\n")
 
 
 def test_zincovit_rejection():

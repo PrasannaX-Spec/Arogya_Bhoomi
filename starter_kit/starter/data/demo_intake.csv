@@ -7,8 +7,8 @@ BATCH-FE2024-1005,Ferrous Sulphate,N/A,73.2,31-Jul-2024,31-Jul-2026,-30,"Patna, 
 BATCH-PO2024-1006,Potassium Chloride,N/A,73.1,29-May-2024,29-May-2026,-93,"Bhubaneswar, Odisha",Wholesaler,Rejected - Below Purity Threshold
 BATCH-FE2025-1007,Ferrous Sulphate,N/A,28.7,08-Jun-2024,08-Jun-2026,-83,"Hisar, Haryana",Retail Pharmacy,Rejected - Below Purity Threshold
 BATCH-FE2025-1008,Ferrous Sulphate,N/A,136.4,28-Jun-2024,28-Jun-2026,-63,"Coimbatore, Tamil Nadu",Distributor,Pending Review
-BATCH-PO2025-1009,Potassium Chloride,N/A,159,01-Oct-2024,01-Oct-2026,32,"Bengaluru Rural, Karnataka",Retail Pharmacy,Pending Review
-BATCH-PO2025-1010,Potassium Chloride,N/A,167,14-Mar-2024,14-Mar-2026,-169,"Hisar, Haryana",Retail Pharmacy,Pending Review
+BATCH-PO2025-1009,Potassium Chloride,N/A,159.0,01-Oct-2024,01-Oct-2026,32,"Bengaluru Rural, Karnataka",Retail Pharmacy,Pending Review
+BATCH-PO2025-1010,Potassium Chloride,N/A,167.0,14-Mar-2024,14-Mar-2026,-169,"Hisar, Haryana",Retail Pharmacy,Pending Review
 BATCH-FE2026-1011,Ferrous Sulphate,N/A,73.1,08-Jun-2024,08-Jun-2026,-83,"Hisar, Haryana",Retail Pharmacy,Rejected - Below Purity Threshold
 BATCH-FE2025-1012,Ferrous Sulphate,N/A,56.3,01-Jun-2024,01-Jun-2026,-90,"Nagpur, Maharashtra",Distributor,Pending Review
 BATCH-PO2024-1013,Potassium Chloride,N/A,135.9,15-Apr-2024,15-Apr-2026,-137,"Indore, Madhya Pradesh",Retail Pharmacy,Accepted - Queued for Redistribution
@@ -17,10 +17,10 @@ BATCH-PO2024-1015,Potassium Chloride,N/A,193.2,04-Oct-2024,04-Oct-2026,35,"Nagpu
 BATCH-FE2024-1016,Ferrous Sulphate,N/A,70.6,13-Jun-2024,13-Jun-2026,-78,"Nagpur, Maharashtra",Distributor,Rejected - Below Purity Threshold
 BATCH-FE2026-1017,Ferrous Sulphate,N/A,101.9,08-Jul-2024,08-Jul-2026,-53,"Indore, Madhya Pradesh",Retail Pharmacy,Accepted - Sent to ICAR Partner
 BATCH-FE2026-1018,Ferrous Sulphate,N/A,65.4,07-Apr-2024,07-Apr-2026,-145,"Bengaluru Rural, Karnataka",Retail Pharmacy,Rejected - Below Purity Threshold
-BATCH-PO2025-1019,Potassium Chloride,N/A,225,20-Jun-2024,20-Jun-2026,-71,"Kochi, Kerala",Wholesaler,Rejected - Below Purity Threshold
+BATCH-PO2025-1019,Potassium Chloride,N/A,225.0,20-Jun-2024,20-Jun-2026,-71,"Kochi, Kerala",Wholesaler,Rejected - Below Purity Threshold
 BATCH-FE2024-1020,Ferrous Sulphate,N/A,125.9,11-Jul-2024,11-Jul-2026,-50,"Meerut, Uttar Pradesh",Distributor,Pending Review
 BATCH-FE2025-1021,Ferrous Sulphate,N/A,199.1,12-Apr-2024,12-Apr-2026,-140,"Indore, Madhya Pradesh",Retail Pharmacy,Pending Review
-BATCH-ZI2026-1022,Zinc Sulphate,21% Zn (heptahydrate),249,02-Aug-2024,02-Aug-2026,-28,"Bhubaneswar, Odisha",Wholesaler,Rejected - Below Purity Threshold
+BATCH-ZI2026-1022,Zinc Sulphate,21% Zn (heptahydrate),249.0,02-Aug-2024,02-Aug-2026,-28,"Bhubaneswar, Odisha",Wholesaler,Rejected - Below Purity Threshold
 BATCH-PO2026-1023,Potassium Chloride,N/A,181.6,24-Aug-2024,24-Aug-2026,-6,"Ludhiana, Punjab",Wholesaler,Rejected - Below Purity Threshold
 BATCH-PO2024-1024,Potassium Chloride,N/A,76.9,31-Mar-2024,31-Mar-2026,-152,"Nagpur, Maharashtra",Distributor,Accepted - Sent to ICAR Partner
 BATCH-FE2026-1025,Ferrous Sulphate,N/A,181.3,13-Oct-2024,13-Oct-2026,44,"Coimbatore, Tamil Nadu",Distributor,Pending Review
@@ -28,14 +28,14 @@ BATCH-PO2026-1026,Potassium Chloride,N/A,158.2,11-Oct-2024,11-Oct-2026,42,"Hisar
 BATCH-FE2026-1027,Ferrous Sulphate,N/A,44.6,14-Sep-2024,14-Sep-2026,15,"Nagpur, Maharashtra",Distributor,Pending Review
 BATCH-PO2025-1028,Potassium Chloride,N/A,9.8,06-Jul-2024,06-Jul-2026,-55,"Nagpur, Maharashtra",Distributor,Rejected - Below Purity Threshold
 BATCH-FE2024-1029,Ferrous Sulphate,N/A,220.1,03-May-2024,03-May-2026,-119,"Ludhiana, Punjab",Wholesaler,Pending Review
-BATCH-PO2026-1030,Potassium Chloride,N/A,22,27-Sep-2024,27-Sep-2026,28,"Patna, Bihar",Retail Pharmacy,Pending Review
-BATCH-FE2024-1031,Ferrous Sulphate,N/A,237,02-Jul-2024,02-Jul-2026,-59,"Indore, Madhya Pradesh",Retail Pharmacy,Rejected - Below Purity Threshold
+BATCH-PO2026-1030,Potassium Chloride,N/A,22.0,27-Sep-2024,27-Sep-2026,28,"Patna, Bihar",Retail Pharmacy,Pending Review
+BATCH-FE2024-1031,Ferrous Sulphate,N/A,237.0,02-Jul-2024,02-Jul-2026,-59,"Indore, Madhya Pradesh",Retail Pharmacy,Rejected - Below Purity Threshold
 BATCH-PO2026-1032,Potassium Chloride,N/A,241.3,19-Jun-2024,19-Jun-2026,-72,"Kochi, Kerala",Wholesaler,Accepted - Queued for Redistribution
 BATCH-PO2026-1033,Potassium Chloride,N/A,248.8,13-Jun-2024,13-Jun-2026,-78,"Bengaluru Rural, Karnataka",Retail Pharmacy,Rejected - Below Purity Threshold
 BATCH-ZI2024-1034,Zinc Sulphate,33% Zn (monohydrate),34.6,26-Jun-2024,26-Jun-2026,-65,"Ahmedabad, Gujarat",Distributor,Pending Review
 BATCH-ZI2026-1035,Zinc Sulphate,21% Zn (heptahydrate),140.7,31-Jul-2024,31-Jul-2026,-30,"Ludhiana, Punjab",Wholesaler,Accepted - Queued for Redistribution
 BATCH-FE2024-1036,Ferrous Sulphate,N/A,159.6,31-Aug-2024,31-Aug-2026,1,"Hisar, Haryana",Retail Pharmacy,Pending Review
-BATCH-FE2025-1037,Ferrous Sulphate,N/A,131,21-Mar-2024,21-Mar-2026,-162,"Nagpur, Maharashtra",Distributor,Accepted - Sent to ICAR Partner
+BATCH-FE2025-1037,Ferrous Sulphate,N/A,131.0,21-Mar-2024,21-Mar-2026,-162,"Nagpur, Maharashtra",Distributor,Accepted - Sent to ICAR Partner
 BATCH-FE2026-1038,Ferrous Sulphate,N/A,182.2,05-Apr-2024,05-Apr-2026,-147,"Ahmedabad, Gujarat",Distributor,Accepted - Sent to ICAR Partner
 BATCH-FE2024-1039,Ferrous Sulphate,N/A,104.7,25-Sep-2024,25-Sep-2026,26,"Patna, Bihar",Retail Pharmacy,Pending Review
 BATCH-PO2025-1040,Potassium Chloride,N/A,108.8,01-Jun-2024,01-Jun-2026,-90,"Bhubaneswar, Odisha",Wholesaler,Pending Review
@@ -44,3 +44,11 @@ BATCH-FE2025-1042,Ferrous Sulphate,N/A,51.6,21-Apr-2024,21-Apr-2026,-131,"Jaipur
 BATCH-ZI2024-1043,Zinc Sulphate,21% Zn (heptahydrate),118.3,13-May-2024,13-May-2026,-109,"Meerut, Uttar Pradesh",Distributor,Accepted - Sent to ICAR Partner
 BATCH-PO2026-1044,Potassium Chloride,N/A,164.8,15-Mar-2024,15-Mar-2026,-168,"Hisar, Haryana",Retail Pharmacy,Pending Review
 BATCH-FE2025-1045,Ferrous Sulphate,N/A,104.6,14-Apr-2024,14-Apr-2026,-138,"Jaipur, Rajasthan",Wholesaler,Accepted - Queued for Redistribution
+BATCH-FE2026-1046,Ferrous Sulphate,N/A,148.5,24-Mar-2024,25-Mar-2026,-138,"Hubballi, Karnataka",Wholesaler,Accepted - Queued for Redistribution
+BATCH-FE2026-1047,Zinc Sulphate,21% Zn (heptahydrate),64.5,07-Nov-2024,07-Nov-2026,-113,"Bengaluru, Karnataka",Distributor,Accepted - Queued for Redistribution
+BATCH-FE2026-1048,Ferrous Sulphate,N/A,98.7,14-Jul-2024,14-Jul-2026,-95,"Mysuru, Karnataka",Retail Pharmacy,Accepted - Queued for Redistribution
+BATCH-FE2026-1049,Potassium Chloride,N/A,89.6,12-Sep-2024,12-Sep-2026,-21,"Belagavi, Karnataka",Retail Pharmacy,Accepted - Queued for Redistribution
+BATCH-FE2026-1050,Zinc Sulphate,33% Zn (monohydrate),172.4,09-Mar-2024,09-Mar-2026,-25,"Dharwad, Karnataka",Distributor,Accepted - Queued for Redistribution
+BATCH-FE2026-1051,Ferrous Sulphate,N/A,141.3,24-Aug-2024,24-Aug-2026,-70,"Davangere, Karnataka",Wholesaler,Accepted - Queued for Redistribution
+BATCH-FE2026-1052,Potassium Chloride,N/A,69.69,19-Nov-2024,19-Nov-2026,38,"Shivamogga, Karnataka",Distributor,Accepted - Queued for Redistribution
+BATCH-FE2026-1053,Ferrous Sulphate,N/A,80.8,17-Dec-2024,17-Dec-2026,20,"Hubballi, Karnataka",Wholesaler,Accepted - Queued for Redistribution
