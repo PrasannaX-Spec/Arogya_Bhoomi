@@ -22,77 +22,106 @@
 
 <div class="grid grid-3" style="margin-bottom: 1.5rem;">
     <!-- Add New Batch Form Card (Left Column) -->
-    <div class="card" style="grid-column: span 1;">
-        <div class="card-header">
-            <h3 class="card-title">Add New Intake Batch</h3>
+    <div class="card intake-form-card" style="grid-column: span 1;">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: #eaf4eb; color: #1d6027; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; border: 1px solid #b8e0bc; flex-shrink: 0;">
+                    📋
+                </div>
+                <div>
+                    <h3 class="card-title" style="margin: 0; font-size: 1.05rem; color: #1b4332;">Add New Intake Batch</h3>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 1px;">Log expired stock for compliance verification</span>
+                </div>
+            </div>
         </div>
 
         <form id="addBatchForm" onsubmit="handleBatchSubmit(event)">
-            <div class="form-group">
-                <label class="form-label" for="batchIdInput">Batch ID</label>
+            <!-- Group 1: Batch & Compound Identification -->
+            <div class="form-section-divider" style="margin-top: 0;">
+                <span class="form-section-title">1. Identification & Compound</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label form-label-required" for="batchIdInput">Batch ID</label>
                 <input type="text" id="batchIdInput" class="form-input" placeholder="e.g. BATCH-ZI2026-9999" required />
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="compoundSelect">Approved Compound</label>
+            <div class="form-group" style="margin-bottom: 0.4rem;">
+                <label class="form-label form-label-required" for="compoundSelect">Approved Compound</label>
                 <select id="compoundSelect" class="form-select" required>
                     <option value="">-- Select Approved Compound --</option>
                     <option value="Ferrous Sulphate">Ferrous Sulphate</option>
                     <option value="Zinc Sulphate">Zinc Sulphate</option>
                     <option value="Potassium Chloride">Potassium Chloride</option>
                 </select>
-                <span class="text-sm text-muted" style="display: block; margin-top: 4px;">
-                    Only single-ingredient approved compounds are permitted.
+            </div>
+            <div style="margin-bottom: 0.85rem;">
+                <span class="text-sm text-muted" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: #5e6b60;">
+                    <span style="color: #2b5439; font-weight: bold;">✓</span> Only single-ingredient approved compounds permitted.
                 </span>
             </div>
 
-            <div class="grid grid-2" style="gap: 0.5rem;">
-                <div class="form-group">
-                    <label class="form-label" for="qtyInput">Quantity</label>
+            <!-- Group 2: Quantity & Supply Origin -->
+            <div class="form-section-divider">
+                <span class="form-section-title">2. Quantity & Supply Origin</span>
+            </div>
+
+            <div class="grid grid-2" style="gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label form-label-required" for="qtyInput">Quantity</label>
                     <input type="number" step="0.1" id="qtyInput" class="form-input" placeholder="100.0" required />
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label" for="unitInput">Unit</label>
-                    <input type="text" id="unitInput" class="form-input" value="kg" readonly />
+                    <input type="text" id="unitInput" class="form-input" value="kg" readonly style="text-align: center;" />
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="sourceTypeSelect">Source Type</label>
-                <select id="sourceTypeSelect" class="form-select">
-                    <option value="Wholesale Distributor">Wholesale Distributor</option>
-                    <option value="Pharma Manufacturer">Pharma Manufacturer</option>
-                    <option value="Hospital Pharmacy">Hospital Pharmacy</option>
-                    <option value="Retail Pharmacy">Retail Pharmacy</option>
-                </select>
+            <div class="grid grid-2" style="gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="sourceTypeSelect">Source Type</label>
+                    <select id="sourceTypeSelect" class="form-select">
+                        <option value="Wholesale Distributor">Wholesale Distributor</option>
+                        <option value="Pharma Manufacturer">Pharma Manufacturer</option>
+                        <option value="Hospital Pharmacy">Hospital Pharmacy</option>
+                        <option value="Retail Pharmacy">Retail Pharmacy</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label form-label-required" for="locationInput">Source Location</label>
+                    <input type="text" id="locationInput" class="form-input" placeholder="City, State (e.g. Bhubaneswar, Odisha)" required />
+                </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="locationInput">Source Location</label>
-                <input type="text" id="locationInput" class="form-input" placeholder="City, State (e.g. Bhubaneswar, Odisha)" required />
+            <!-- Group 3: Dates & Specification -->
+            <div class="form-section-divider">
+                <span class="form-section-title">3. Timeline & Grade</span>
             </div>
 
-            <div class="grid grid-2" style="gap: 0.5rem;">
-                <div class="form-group">
-                    <label class="form-label" for="mfgDateInput">Mfg Date</label>
+            <div class="grid grid-2" style="gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label form-label-required" for="mfgDateInput">Mfg Date</label>
                     <input type="date" id="mfgDateInput" class="form-input" required />
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="expDateInput">Expiry Date</label>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label form-label-required" for="expDateInput">Expiry Date</label>
                     <input type="date" id="expDateInput" class="form-input" required />
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 0.85rem;">
                 <label class="form-label" for="gradeInput">Purity / Concentration Grade</label>
                 <input type="text" id="gradeInput" class="form-input" placeholder="e.g. 21% Zn Grade" value="Standard Grade" />
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Submit Batch for Verification</button>
+            <button type="submit" class="btn btn-primary btn-block btn-submit-batch">
+                <span style="font-size: 1.05rem;">⚡</span>
+                <span>Submit Batch for Verification</span>
+            </button>
         </form>
 
         <!-- Compliance Result Card -->
-        <div id="complianceResultCard" class="compliance-result-box" style="display: none; margin-top: 1rem;">
+        <div id="complianceResultCard" class="compliance-result-box" style="display: none; margin-top: 1.25rem;">
             <h4 id="resultTitle" style="margin-top: 0;">Compliance Result</h4>
             <div id="resultBadges" class="result-badges-list"></div>
             <div id="resultMessage" style="font-size: 0.85rem; margin-top: 0.5rem; color: #444;"></div>

@@ -1480,5 +1480,112 @@ h1, h2, h3, h4 {
   flex-shrink: 0;
 }
 
+/* ==========================================================================
+   Add Intake Batch Form — Polished Production UI Styles
+   ========================================================================== */
+.intake-form-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.06);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.intake-form-card:hover {
+  box-shadow: 0 6px 20px rgba(27, 67, 50, 0.09);
+  border-color: #c5d8cb;
+}
+
+.form-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.15rem 0 0.75rem 0;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.form-section-title {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-color);
+  background-color: var(--status-accepted-bg);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--status-accepted-border);
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.625rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-family: var(--font-family);
+  background-color: #ffffff;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.form-input:hover, .form-select:hover {
+  border-color: var(--primary-color);
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(43, 84, 57, 0.12);
+  background-color: #ffffff;
+}
+
+.form-input[readonly] {
+  background-color: var(--bg-subtle);
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: not-allowed;
+  border-color: var(--border-color);
+}
+
+.form-label-required::after {
+  content: " *";
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.btn-submit-batch {
+  background: linear-gradient(135deg, #1b4332 0%, #2b5439 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.925rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.18);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.btn-submit-batch:hover {
+  background: linear-gradient(135deg, #123023 0%, #20412b 100%);
+  box-shadow: 0 6px 16px rgba(27, 67, 50, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-submit-batch:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.15);
+}
+
+
 
 

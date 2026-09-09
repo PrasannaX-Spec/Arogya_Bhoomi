@@ -2,7 +2,7 @@
 
 > **Healthy Soil • Healthy Life**  
 > *Traceable Recovery & Deployment Platform for Micronutrient Compounds from Expired Pharmaceuticals*  
-> *Smart India Hackathon (SIH) 2026 — Problem Statement ID: 198*
+> *Smart India Hackathon (SIH) 2026 — Problem Statement ID: 193*
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.0+-black?logo=flask&logoColor=white)
@@ -221,7 +221,7 @@ python -m pytest tests
 ## 📁 Repository & Project Structure
 
 ```text
-SIH-198/
+SIH-193/
 ├── README.md                           # Master project documentation
 ├── Demo_Expired_Stock_Intake_Data_UPDATED.xlsx   # Source intake batch data (53 batches)
 ├── State_Soil_Deficiency_Medicine_Match_FILTERED.xlsx  # Source soil deficiency data (29 profiles)
@@ -292,5 +292,5 @@ SIH-198/
 ---
 
 <div align="center">
-  <sub>Smart India Hackathon (SIH) 2026 — Problem Statement 198 | Arogya Bhoomi — Healthy Soil • Healthy Life</sub>
+  <sub>Smart India Hackathon (SIH) 2026 — Problem Statement 193 | Arogya Bhoomi — Healthy Soil • Healthy Life</sub>
 </div>

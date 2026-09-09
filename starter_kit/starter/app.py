@@ -1,5 +1,5 @@
 """
-app.py — Flask application for Arogya Bhoomi (SIH-198)
+app.py — Flask application for Arogya Bhoomi (SIH-193)
 Traceable Recovery & Deployment Platform for Micronutrient Compounds
 from Expired Pharmaceuticals.
 

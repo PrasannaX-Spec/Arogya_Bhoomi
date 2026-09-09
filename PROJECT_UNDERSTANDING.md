@@ -1,4 +1,4 @@
-# PROJECT UNDERSTANDING — SIH-198
+# PROJECT UNDERSTANDING — SIH-193
 
 > Complete analysis of the workspace at `d:\SIH-2026\SIH-198`
 > All files read. No files skipped. No files could not be opened.
@@ -7,7 +7,7 @@
 
 ## 1. Project Overview
 
-This is a **Smart India Hackathon (SIH) 2026** project (Problem Statement ID: **198**). It is a **Traceable Recovery & Deployment Platform for Micronutrient Compounds from Expired Pharmaceuticals**.
+This is a **Smart India Hackathon (SIH) 2026** project (Problem Statement ID: **193**). It is a **Traceable Recovery & Deployment Platform for Micronutrient Compounds from Expired Pharmaceuticals**.
 
 The core idea: India has massive quantities of expired pharmaceutical stock (documented examples: ₹400+ crore destroyed in the 2016 FDC ban, Ranbaxy's Mohali write-offs, Abbott India disputes with chemists). Many of these expired medicines contain **single-compound mineral ingredients** (iron, zinc, potassium) that are chemically identical to standard agricultural fertilizers. Rather than destroying this stock, the platform proposes **recovering the active mineral compounds** and **redeploying them as soil micronutrient supplements** to regions with documented soil deficiency — under strict compliance, dosage, and safety controls.
 
