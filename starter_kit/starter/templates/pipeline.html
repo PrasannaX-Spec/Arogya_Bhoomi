@@ -110,6 +110,28 @@
         </div>
     </div>
 
+    <!-- Dynamic Destination Selector Box -->
+    <div id="candidateSelectionBox" style="margin-top: 1.25rem; margin-bottom: 1.5rem; padding: 1.25rem; background: #ffffff; border: 1px solid #c8e6c9; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 2px solid #e8f5e9; padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="margin: 0; color: #1b4332; display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">
+                🎯 Eligible Destination Options (Select Final Destination)
+                <span class="badge badge-info" style="font-weight: normal; font-size: 0.75rem; background: #e3f2fd; color: #0d47a1;">Human-in-the-Loop Governance</span>
+            </h4>
+            <span id="currentSelectionModeBadge" class="badge badge-success" style="font-size: 0.8rem;">Selection Mode: AUTO</span>
+        </div>
+        <div style="background: #f8faf9; padding: 0.6rem 0.85rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid #e0e6e2; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.84rem;">
+            <div>Original Suggested Destination: <strong id="lblSuggestedDest" style="color: #1565c0;">--</strong></div>
+            <div>Current Final Destination: <strong id="lblCurrentDest" style="color: #2e7d32;">--</strong></div>
+            <div>Selection Governance: <strong id="lblSelectionMode" style="color: #2e7d32;">AUTO RECOMMENDATION</strong></div>
+        </div>
+        <p style="font-size: 0.85rem; color: #555; margin-bottom: 1rem;">
+            The engine evaluated regional soil deficiencies and Haversine distances. The existing database destination remains unchanged until you explicitly select an option below.
+        </p>
+        <div id="candidatesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.85rem;">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+
     <!-- Match Details Table -->
     <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
         <div>
@@ -305,6 +327,33 @@ function executePipelineAPI() {
                 document.getElementById('resPartner').textContent = partnerName;
                 document.getElementById('resPartnerLoc').textContent = partnerLoc;
 
+                // Render candidate destination selector cards directly from response data
+                const matchId = m.match_id;
+                const candidates = m.eligible_candidates || [];
+                const activeState = m.target_state;
+                const suggestedState = m.suggested_target_state || activeState;
+                const mode = m.destination_selection_mode || 'AUTO';
+                
+                const lblSugg = document.getElementById('lblSuggestedDest');
+                if (lblSugg) lblSugg.textContent = suggestedState;
+                
+                const lblCurr = document.getElementById('lblCurrentDest');
+                if (lblCurr) lblCurr.textContent = activeState;
+                
+                const lblMode = document.getElementById('lblSelectionMode');
+                if (lblMode) {
+                    lblMode.textContent = mode === 'MANUAL_OVERRIDE' ? 'MANUAL OVERRIDE (OPERATOR)' : 'AUTO RECOMMENDATION';
+                    lblMode.style.color = mode === 'MANUAL_OVERRIDE' ? '#e65100' : '#2e7d32';
+                }
+
+                const badgeMode = document.getElementById('currentSelectionModeBadge');
+                if (badgeMode) {
+                    badgeMode.textContent = `Selection Mode: ${mode === 'MANUAL_OVERRIDE' ? 'MANUAL OVERRIDE (OPERATOR)' : 'AUTO RECOMMENDATION'}`;
+                    badgeMode.className = `badge ${mode === 'MANUAL_OVERRIDE' ? 'badge-warning' : 'badge-success'}`;
+                }
+
+                renderCandidateCards(candidates, activeState, matchId);
+
                 document.getElementById('pipelineResultSection').style.display = 'block';
             } else {
                 alert(`Pipeline stopped: ${data.compliance?.reason || 'Compliance failure'}`);
@@ -315,6 +364,114 @@ function executePipelineAPI() {
             document.getElementById('runPipelineBtn').textContent = '[ RUN RECOVERY PIPELINE ]';
             alert('Error running pipeline: ' + err);
         });
+}
+
+function loadMatchCandidates(batchId, currentTargetState) {
+    fetch('/api/matches')
+        .then(res => res.json())
+        .then(matches => {
+            const match = matches.find(m => m.batch_id === batchId);
+            if (match) {
+                fetch(`/api/matches/${match.match_id}/candidates`)
+                    .then(res => res.json())
+                    .then(candData => {
+                        const candidates = candData.candidates || [];
+                        const activeState = match.target_state || currentTargetState;
+                        const suggestedState = match.suggested_target_state || candData.suggested_target_state || activeState;
+                        const mode = match.destination_selection_mode || candData.selection_mode || 'AUTO';
+                        
+                        const lblSugg = document.getElementById('lblSuggestedDest');
+                        if (lblSugg) lblSugg.textContent = suggestedState;
+                        
+                        const lblCurr = document.getElementById('lblCurrentDest');
+                        if (lblCurr) lblCurr.textContent = activeState;
+                        
+                        const lblMode = document.getElementById('lblSelectionMode');
+                        if (lblMode) {
+                            lblMode.textContent = mode === 'MANUAL_OVERRIDE' ? 'MANUAL OVERRIDE (OPERATOR)' : 'AUTO RECOMMENDATION';
+                            lblMode.style.color = mode === 'MANUAL_OVERRIDE' ? '#e65100' : '#2e7d32';
+                        }
+
+                        const badgeMode = document.getElementById('currentSelectionModeBadge');
+                        if (badgeMode) {
+                            badgeMode.textContent = `Selection Mode: ${mode === 'MANUAL_OVERRIDE' ? 'MANUAL OVERRIDE (OPERATOR)' : 'AUTO RECOMMENDATION'}`;
+                            badgeMode.className = `badge ${mode === 'MANUAL_OVERRIDE' ? 'badge-warning' : 'badge-success'}`;
+                        }
+
+                        renderCandidateCards(candidates, activeState, match.match_id);
+                    });
+            }
+        })
+        .catch(err => console.error("Error fetching match candidates:", err));
+}
+
+function renderCandidateCards(candidates, activeTargetState, matchId) {
+    const container = document.getElementById('candidatesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!candidates || candidates.length === 0) {
+        container.innerHTML = '<p style="color:#777; font-style:italic;">No eligible destination candidates found for this compound.</p>';
+        return;
+    }
+
+    candidates.forEach(cand => {
+        const isSelected = (cand.target_state === activeTargetState);
+        const card = document.createElement('div');
+        card.style.cssText = `
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid ${isSelected ? '#2d6a4f' : '#cfd8dc'};
+            background: ${isSelected ? '#f4fbf7' : '#ffffff'};
+            transition: all 0.2s ease;
+            box-shadow: ${isSelected ? '0 3px 10px rgba(45,106,79,0.18)' : '0 2px 4px rgba(0,0,0,0.03)'};
+        `;
+
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="font-size: 1.05rem; color: #1b4332;">#${cand.rank} ${cand.target_state}</strong>
+                ${cand.is_suggested ? '<span class="badge badge-info" style="font-size: 0.68rem; background:#e3f2fd; color:#0d47a1;">Engine Suggested</span>' : ''}
+            </div>
+            <div style="font-size: 0.85rem; color: #444; margin-bottom: 0.35rem;">
+                📏 Distance: <strong>${cand.distance_km === 0 ? 'Same-State (0 km)' : cand.distance_km + ' km'}</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: #555; margin-bottom: 0.85rem;">
+                🧪 Deficiency: <strong>${cand.deficient_nutrients}</strong>
+            </div>
+            <button onclick="selectDestinationState(${matchId}, '${cand.target_state}')" 
+                class="btn ${isSelected ? 'btn-success' : 'btn-primary'}" 
+                style="width: 100%; font-size: 0.85rem; padding: 0.5rem; ${isSelected ? 'background:#2d6a4f; cursor:default;' : 'background:#1b4332; color:#ffffff; font-weight:700; cursor:pointer;'}"
+                ${isSelected ? 'disabled' : ''}>
+                ${isSelected ? '✓ Final Target State' : 'SELECT DESTINATION &rarr;'}
+            </button>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function selectDestinationState(matchId, selectedState) {
+    if (!confirm(`Confirm assigning '${selectedState}' as the final target destination for this batch?`)) {
+        return;
+    }
+
+    fetch(`/api/matches/${matchId}/select_destination`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            selected_state: selectedState,
+            reason: `Operator explicitly selected ${selectedState} from candidate list`
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✓ Final destination updated and persisted to database: ${selectedState}`);
+            executePipelineAPI();
+        } else {
+            alert('Error updating destination: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Network error updating destination: ' + err));
 }
 
 function downloadAcknowledgementPDF() {

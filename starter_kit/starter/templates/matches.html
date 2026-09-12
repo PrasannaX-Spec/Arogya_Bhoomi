@@ -327,12 +327,12 @@ async function openMatchDetail(matchId) {
             <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
                 <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.65rem;">Deficiency Regional Target</h4>
                 <div class="grid grid-3">
-                    <div><span class="text-sm text-muted">Target State:</span> <strong style="color: var(--primary-color); font-size: 1.05rem;">${m.target_state}</strong></div>
-                    <div><span class="text-sm text-muted">Target District (Illustrative):</span> <div>${m.target_district || 'Regional Agricultural Zone'}</div></div>
+                    <div><span class="text-sm text-muted">Final Target State:</span> <strong style="color: var(--primary-color); font-size: 1.05rem;">${m.target_state}</strong></div>
+                    <div><span class="text-sm text-muted">Original Suggested State:</span> <strong style="color: #455a64; font-size: 0.95rem;">${m.suggested_target_state || m.target_state}</strong></div>
+                    <div><span class="text-sm text-muted">Selection Governance:</span> <div><span class="badge ${m.destination_selection_mode === 'MANUAL_OVERRIDE' ? 'badge-warning' : 'badge-success'}" style="font-size:0.75rem;">${m.destination_selection_mode === 'MANUAL_OVERRIDE' ? 'Operator Selected' : 'Auto Suggested'}</span></div></div>
+                    <div><span class="text-sm text-muted">Target District:</span> <div>${m.target_district || 'Regional Agricultural Zone'}</div></div>
                     <div><span class="text-sm text-muted">Deficient Element:</span> <div><span class="status-chip status-chip-pending">${m.deficiency_type}</span></div></div>
                     <div><span class="text-sm text-muted">Severity Tier:</span> <div>${m.severity || 'Medium'}</div></div>
-                    <div><span class="text-sm text-muted">Data Source:</span> <div style="font-size:0.78rem; color:var(--text-muted);">Authoritative State Soil Baseline</div></div>
-                    <div><span class="text-sm text-muted">Match Category:</span> <div>${m.match_type === 'same_state' ? 'Same-State Match' : 'Nearest Fallback Match'}</div></div>
                 </div>
             </div>
 

@@ -126,6 +126,27 @@ def test_rejected_batch():
     conn.close()
 
 
+def test_eligible_candidates_generation():
+    """Test 5: Verify find_match generates up to 4 ranked eligible candidate destinations."""
+    print("=" * 60)
+    print("TEST 5: Dynamic Top 4 Candidates Generation")
+    print("=" * 60)
+
+    result = find_match("BATCH-ZI2026-1014")
+    assert "eligible_candidates" in result
+    candidates = result["eligible_candidates"]
+
+    print(f"  Total Candidates Generated: {len(candidates)}")
+    for cand in candidates:
+        print(f"    Rank #{cand['rank']}: {cand['target_state']} ({cand['distance_km']} km) - Suggested: {cand['is_suggested']}")
+
+    assert len(candidates) > 0
+    assert len(candidates) <= 4
+    assert candidates[0]["is_suggested"] is True
+    assert candidates[0]["rank"] == 1
+    print("  PASSED - Dynamic 4 candidate destination generation verified\n")
+
+
 if __name__ == "__main__":
     print("\n--- Running Module 2 (Soil-Deficiency Matching) Tests ---\n")
 
@@ -135,6 +156,7 @@ if __name__ == "__main__":
     test_same_state_match_haryana()
     test_fallback_match_kerala()
     test_rejected_batch()
+    test_eligible_candidates_generation()
 
     print("=" * 60)
     print("ALL TESTS PASSED")

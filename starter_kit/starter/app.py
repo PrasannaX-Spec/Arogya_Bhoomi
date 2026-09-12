@@ -211,6 +211,8 @@ def init_db_schema():
             compound_name TEXT NOT NULL,
             source_state TEXT,
             target_state TEXT,
+            suggested_target_state TEXT,
+            destination_selection_mode TEXT DEFAULT 'AUTO',
             target_district TEXT,
             deficiency_type TEXT,
             severity TEXT DEFAULT 'Medium',
@@ -270,6 +272,8 @@ def init_db_schema():
 
         # Safe Column Additions
         alter_cols = [
+            ("matches", "suggested_target_state", "TEXT"),
+            ("matches", "destination_selection_mode", "TEXT DEFAULT 'AUTO'"),
             ("matches", "origin", "TEXT DEFAULT 'pipeline'"),
             ("matches", "assigned_partner_id", "INTEGER"),
             ("matches", "assigned_partner_name", "TEXT"),
@@ -302,6 +306,9 @@ def init_db_schema():
             except sqlite3.OperationalError:
                 pass
 
+        # Backfill suggested_target_state and destination_selection_mode for existing records if null
+        conn.execute("UPDATE matches SET suggested_target_state = target_state WHERE suggested_target_state IS NULL OR suggested_target_state = ''")
+        conn.execute("UPDATE matches SET destination_selection_mode = 'AUTO' WHERE destination_selection_mode IS NULL OR destination_selection_mode = ''")
         conn.commit()
     finally:
         conn.close()
@@ -378,13 +385,14 @@ def seed_demo_matches_and_audit():
                     cursor = conn.cursor()
                     cursor.execute("""
                         INSERT INTO matches
-                        (batch_id, compound_name, source_state, target_state, target_district, deficiency_type, severity, match_type, recommended_dosage, dosage_type, status, origin, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Matched', 'demo_seed', ?)
+                        (batch_id, compound_name, source_state, target_state, suggested_target_state, destination_selection_mode, target_district, deficiency_type, severity, match_type, recommended_dosage, dosage_type, status, origin, created_at)
+                        VALUES (?, ?, ?, ?, ?, 'AUTO', ?, ?, ?, ?, ?, ?, 'Matched', 'demo_seed', ?)
                     """, (
                         batch_id,
                         batch_row["compound_name"],
                         match_res.get("source_state"),
                         match_res.get("target_state"),
+                        match_res.get("target_state"),  # suggested_target_state
                         match_res.get("target_district") or "Illustrative Regional Belt",
                         def_nutrient,
                         "Medium",
@@ -492,11 +500,11 @@ def process_batch(batch_doc_id):
     geo = resolve_location(batch["source_location"])
     result["geolocation"] = geo
 
-    # Step 3: Soil-deficiency matching
-    match = find_match(batch_doc_id)
-    result["matching"] = match
+    # Step 3: Soil-deficiency matching candidates
+    match_calc = find_match(batch_doc_id)
 
-    if match.get("matched") is not True:
+    if match_calc.get("matched") is not True:
+        result["matching"] = match_calc
         result["pipeline_complete"] = False
         result["stopped_at"] = "matching"
         return jsonify(result), 200
@@ -508,36 +516,58 @@ def process_batch(batch_doc_id):
     result["pipeline_complete"] = True
 
     # Record match in matches table & audit chain idempotently
-    if not existing_match and match.get("matched"):
+    if not existing_match and match_calc.get("matched"):
         conn = get_db_connection()
         try:
             dosage_str = dosage.get("spec") if dosage.get("type") == "foliar_spray" else f"{dosage.get('rate_kg_ha')} {dosage.get('unit')}"
             def_nutrient = "Zn" if "Zinc" in batch["compound_name"] else ("Fe" if "Ferrous" in batch["compound_name"] else "K")
 
-            conn.execute("""
-                INSERT INTO matches (batch_id, compound_name, source_state, target_state, target_district, deficiency_type, severity, match_type, recommended_dosage, dosage_type, status, origin, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Matched', 'pipeline', ?)
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO matches (batch_id, compound_name, source_state, target_state, suggested_target_state, destination_selection_mode, target_district, deficiency_type, severity, match_type, recommended_dosage, dosage_type, status, origin, created_at)
+                VALUES (?, ?, ?, ?, ?, 'AUTO', ?, ?, ?, ?, ?, ?, 'Matched', 'pipeline', ?)
             """, (
                 batch_doc_id,
                 batch["compound_name"],
-                match.get("source_state"),
-                match.get("target_state"),
-                match.get("target_district") or "Illustrative Regional Belt",
+                match_calc.get("source_state"),
+                match_calc.get("target_state"),
+                match_calc.get("target_state"),  # initial suggested state
+                match_calc.get("target_district") or "Illustrative Regional Belt",
                 def_nutrient,
                 "Medium",
-                match.get("match_type"),
+                match_calc.get("match_type"),
                 dosage_str,
                 dosage.get("type"),
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             ))
             conn.commit()
+            existing_match = conn.execute("SELECT * FROM matches WHERE match_id = ?", (cursor.lastrowid,)).fetchone()
         except Exception:
             pass
         finally:
             conn.close()
 
-        record_audit_event(batch_doc_id, "MATCH_CREATED", "Matching Engine", f"Deficiency match created for target state: {match.get('target_state')}")
+        record_audit_event(batch_doc_id, "MATCH_CREATED", "Matching Engine", f"Deficiency match created for target state: {match_calc.get('target_state')}")
         record_audit_event(batch_doc_id, "DOSAGE_GENERATED", "Dosage Engine", f"ICAR dosage recommendation generated: {dosage_str}")
+
+    # Build response matching object using DB record to PRESERVE persisted destination
+    if existing_match:
+        m_dict = dict(existing_match)
+        result["matching"] = {
+            "matched": True,
+            "match_id": m_dict["match_id"],
+            "target_state": m_dict["target_state"], # PERSISTED FINAL DESTINATION IN DB
+            "suggested_target_state": m_dict.get("suggested_target_state") or m_dict["target_state"],
+            "destination_selection_mode": m_dict.get("destination_selection_mode") or "AUTO",
+            "source_state": m_dict.get("source_state") or match_calc.get("source_state"),
+            "target_district": m_dict.get("target_district") or "Illustrative Regional Belt",
+            "deficiency_type": m_dict.get("deficiency_type") or match_calc.get("deficient_nutrients"),
+            "severity": m_dict.get("severity") or "Medium",
+            "match_type": m_dict.get("match_type") or match_calc.get("match_type"),
+            "eligible_candidates": match_calc.get("eligible_candidates", [])
+        }
+    else:
+        result["matching"] = match_calc
 
     return jsonify(result), 200
 
@@ -877,6 +907,81 @@ def record_match_handoff(match_id):
         """, (match_id,)).fetchone()
 
         return jsonify(dict(updated)), 200
+    finally:
+        conn.close()
+
+
+@app.route("/api/matches/<int:match_id>/candidates", methods=["GET"])
+def get_match_candidates(match_id):
+    """
+    Get up to 4 eligible target destination candidates for a match.
+    """
+    conn = get_db_connection()
+    try:
+        row = conn.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,)).fetchone()
+        if not row:
+            return jsonify({"error": f"Match '{match_id}' not found"}), 404
+
+        match_row = dict(row)
+        match_res = find_match(match_row["batch_id"])
+        candidates = match_res.get("eligible_candidates", [])
+        return jsonify({
+            "match_id": match_id,
+            "batch_id": match_row["batch_id"],
+            "current_target_state": match_row["target_state"],
+            "suggested_target_state": match_row.get("suggested_target_state") or match_row["target_state"],
+            "selection_mode": match_row.get("destination_selection_mode") or "AUTO",
+            "candidates": candidates
+        }), 200
+    finally:
+        conn.close()
+
+
+@app.route("/api/matches/<int:match_id>/select_destination", methods=["POST"])
+def select_destination(match_id):
+    """
+    Operator selection of destination state from top eligible candidates.
+    Persists target_state to database and appends DESTINATION_SELECTED audit event.
+    """
+    data = request.get_json() or {}
+    selected_state = data.get("selected_state")
+    reason = data.get("reason", "Operator selected candidate destination state")
+
+    if not selected_state:
+        return jsonify({"error": "selected_state is required"}), 400
+
+    conn = get_db_connection()
+    try:
+        row = conn.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,)).fetchone()
+        if not row:
+            return jsonify({"error": f"Match '{match_id}' not found"}), 404
+
+        match_row = dict(row)
+        if match_row["status"] not in ["Matched", "Ready for Partner"]:
+            return jsonify({"error": f"Destination can only be changed before partner handoff (current status: '{match_row['status']}')"}), 400
+
+        batch_id = match_row["batch_id"]
+        prev_state = match_row["target_state"]
+        orig_suggested = match_row.get("suggested_target_state") or prev_state
+
+        conn.execute("""
+            UPDATE matches
+            SET target_state = ?,
+                destination_selection_mode = 'MANUAL_OVERRIDE'
+            WHERE match_id = ?
+        """, (selected_state, match_id))
+        conn.commit()
+
+        # Append audit trail event
+        record_audit_event(
+            batch_id,
+            "DESTINATION_SELECTED",
+            "Operator Console",
+            f"Destination updated from '{prev_state}' to '{selected_state}' (Original Suggested: '{orig_suggested}'). Reason: {reason}"
+        )
+
+        updated = conn.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,)).fetchone()
+        return jsonify({"success": True, "match": dict(updated)}), 200
     finally:
         conn.close()
 
